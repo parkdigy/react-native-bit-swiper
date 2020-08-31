@@ -1,0 +1,55 @@
+{
+  "name": "react-native-bit-swiper",
+  "title": "React Native Bit Swiper",
+  "version": "1.0.0",
+  "description": "Swiper component for React Native",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parkdigy/react-native-bit-swiper.git",
+    "baseUrl": "https://github.com/parkdigy/react-native-bit-swiper"
+  },
+  "bugs": {
+    "url": "https://github.com/parkdigy/react-native-bit-swiper/issues"
+  },
+  "homepage": "https://github.com/parkdigy/react-native-bit-swiper",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "keywords": [
+    "react-native",
+    "react",
+    "native",
+    "swiper",
+    "swipe",
+    "slider",
+    "slide",
+    "carousel",
+    "scrollview",
+    "scroll",
+    "scrolling",
+    "loop",
+    "infinite",
+    "snap",
+    "card",
+    "cards",
+    "stack",
+    "deck",
+    "android",
+    "ios",
+    "snapping",
+    "component"
+  ],
+  "author": "Young Chul Park",
+  "license": "MIT",
+  "licenseFilename": "LICENSE",
+  "readmeFilename": "README.md",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "dependencies": {
+    "prop-types": "^15.6.1"
+  }
+}
