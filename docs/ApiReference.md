@@ -1,4 +1,4 @@
-# React Native Bit Swiper API 명세서 (API Reference)
+# 📖 React Native Bit Swiper API 명세서 (API Reference)
 
 이 문서는 React Native Bit Swiper 의 Props, Event, Method 에 대한 상세 정보를 제공합니다.
 
@@ -63,7 +63,7 @@
 | :---: |
 | array |
 
-> 관련 예제 : [`기본`](Examples.md#기본) 
+> 관련 예제 : [기본](Examples.md#기본) 
 
 ### `itemWidth`[⬆](#props-목차)
 아이템의 넓이
@@ -72,7 +72,7 @@
 | :--------------: | :---: |
 | nubmer \| string | 100%  |
 
-> 관련 예제 : [`비활성 아이템 표시`](Examples.md#비활성-아이템-표시)
+> 관련 예제 : [비활성 아이템 표시](Examples.md#비활성-아이템-표시)
 
 ### `itemAlign`[⬆](#props-목차)
 아이템 정렬 기준
@@ -83,7 +83,7 @@
 | :---:  | :---: | ---                 |
 | string | top   | top, middle, bottom |
 
-> 관련 예제 : [`아이템 정렬`](Examples.md#아이템-정렬)
+> 관련 예제 : [아이템 정렬](Examples.md#아이템-정렬)
 
 ### `itemScaleAlign`[⬆](#props-목차)
 아이템 스케일 정렬 기준
@@ -94,7 +94,7 @@
 | :---:  | :---:  | ---                 |
 | string | middle | top, middle, bottom |
 
-> 관련 예제 : [`아이템 스케일 정렬`](Examples.md#아이템-스케일-정렬)
+> 관련 예제 : [아이템 스케일 정렬](Examples.md#아이템-스케일-정렬)
 
 ## Props - 활성 아이템 관련
 
@@ -105,7 +105,7 @@
 | :----: | :-----: | :-------: |
 | number | 1.0     | 0.0 ~ 1.0 |
 
-> 관련 예제 : [`비활성 아이템 표시`](Examples.md#비활성-아이템-표시)
+> 관련 예제 : [비활성 아이템 표시](Examples.md#비활성-아이템-표시)
 
 ### `activeItemOpacity`[⬆](#props-목차)
 활성 아이템의 투명도
@@ -114,7 +114,7 @@
 | :----: | :-----: | :-------: |
 | number | 1.0     | 0.0 ~ 1.0 |
 
-> 관련 예제 : [`비활성 아이템 표시`](Examples.md#비활성-아이템-표시)
+> 관련 예제 : [비활성 아이템 표시](Examples.md#비활성-아이템-표시)
 
 ## Props - 비활성 아이템 관련
 
@@ -125,7 +125,7 @@
 | :----: | :-----: | :-------: |
 | number | 1.0     | 0.0 ~ 1.0 |
 
-> 관련 예제 : [`비활성 아이템 표시`](Examples.md#비활성-아이템-표시)
+> 관련 예제 : [비활성 아이템 표시](Examples.md#비활성-아이템-표시)
 
 ### `inactiveItemOpacity`[⬆](#props-목차)
 비활성 아이템의 투명도
@@ -134,7 +134,7 @@
 | :----: | :-----: | :-------: |
 | number | 1.0     | 0.0 ~ 1.0 |
 
-> 관련 예제 : [`비활성 아이템 표시`](Examples.md#비활성-아이템-표시)
+> 관련 예제 : [비활성 아이템 표시](Examples.md#비활성-아이템-표시)
 
 ### `inactiveItemOffset`[⬆](#props-목차)
 활성 아이템의 왼쪽/오른쪽에 표시할 비활성 아이템의 넓이
@@ -143,7 +143,7 @@
 | :----: | :---: |
 | number | 0    |
 
-> 관련 예제 : [`비활성 아이템 표시`](Examples.md#비활성-아이템-표시)
+> 관련 예제 : [비활성 아이템 표시](Examples.md#비활성-아이템-표시)
 
 ## Props - 루프 (Loop) 관련
 
@@ -160,7 +160,7 @@
 | :----:  | :---: |
 | boolean | false |
 
-> 관련 예제 : [`루프 (Loop)`](Examples.md#루프-loop)
+> 관련 예제 : [루프 (Loop)](Examples.md#루프-loop)
 
 ### `loopSingleItem`[⬆](#props-목차)
 아이템이 1개 일때 루프 사용 여부
@@ -172,7 +172,7 @@
 | :----:  | :---: |
 | boolean | false |
 
-> 관련 예제 : [`루프 (Loop)`](Examples.md#루프-loop)
+> 관련 예제 : [루프 (Loop)](Examples.md#루프-loop)
 
 ### `loopCloneCount`[⬆](#props-목차)
 루프 사용 시 왼쪽/오른쪽에 복사 할 아이템 수
@@ -181,7 +181,7 @@
 | :----: | :---: | --- |
 | number | 4    | 2 이상 권장 (2 미만 일 경우 Android 에서 깜박임 현상이 발생할 수 있습니다) |
 
-> 관련 예제 : [`루프 (Loop)`](Examples.md#루프-loop)
+> 관련 예제 : [루프 (Loop)](Examples.md#루프-loop)
 
 ## Props - 자동 스크롤 (Autoplay) 관련
 
@@ -192,7 +192,7 @@
 | :---:  | :---: |
 | boolean | false |
 
-> 관련 예제 : [`자동 스크롤 (Autoplay)`](Examples.md#자동-스크롤-autoplay)
+> 관련 예제 : [자동 스크롤 (Autoplay)](Examples.md#자동-스크롤-autoplay)
 
 ### `autoplayDelay`[⬆](#props-목차)
 최초 자동 스크롤 실행 시 대기 시간
@@ -201,7 +201,7 @@
 | :----: | :---: | :-------------: |
 | number | 1000  | Millisecond(ms) |
 
-> 관련 예제 : [`자동 스크롤 (Autoplay)`](Examples.md#자동-스크롤-autoplay)
+> 관련 예제 : [자동 스크롤 (Autoplay)](Examples.md#자동-스크롤-autoplay)
 
 ### `autoplayInterval`[⬆](#props-목차)
 자동 스크롤 시간 간격
@@ -210,7 +210,7 @@
 | :----: | :---: | :-------------: |
 | number | 3000  | Millisecond(ms) |
 
-> 관련 예제 : [`자동 스크롤 (Autoplay)`](Examples.md#자동-스크롤-autoplay)
+> 관련 예제 : [자동 스크롤 (Autoplay)](Examples.md#자동-스크롤-autoplay)
 
 ## Props - 페이지 (Paginate) 관련
 
@@ -221,7 +221,7 @@
 | :----:  | :---: |
 | boolean | false |
 
-> 관련 예제 : [`페이지 스타일`](Examples.md#페이지-스타일)
+> 관련 예제 : [페이지 스타일](Examples.md#페이지-스타일)
 
 ### `paginateStyle`[⬆](#props-목차)
 패이지 영역 스타일 (스타일을 지정하면, 기본 스타일에 병합됩니다)
@@ -236,7 +236,7 @@
 }    
 ```
 
-> 관련 예제 : [`페이지 스타일`](Examples.md#페이지-스타일)
+> 관련 예제 : [페이지 스타일](Examples.md#페이지-스타일)
 
 ### `paginateDotStyle`[⬆](#props-목차)
 페이지 영역의 기본(비활성) 도트 스타일 (스타일을 지정하면, 기본 스타일이 대체됩니다)
@@ -252,7 +252,7 @@
 }    
 ```
 
-> 관련 예제 : [`페이지 스타일`](Examples.md#페이지-스타일)
+> 관련 예제 : [페이지 스타일](Examples.md#페이지-스타일)
 
 ### `paginateActiveDotStyle`[⬆](#props-목차)
 페이지 영역의 활성 도트 스타일 (스타일을 지정하면, 기본 스타일이 대체됩니다)
@@ -268,7 +268,7 @@
 }    
 ```
 
-> 관련 예제 : [`페이지 스타일`](Examples.md#페이지-스타일)
+> 관련 예제 : [페이지 스타일](Examples.md#페이지-스타일)
 
 ## Events
 
@@ -285,7 +285,7 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 | item  | any    | 아이템의 value |
 | index | number | 아이템의 index |
 
-> 관련 예제 : [`기본`](Examples.md#기본) 
+> 관련 예제 : [기본](Examples.md#기본) 
 
 ### `onItemIndexChange`[⬆](#events-목차)
 활성 아이템 변경 이벤트 (스크롤이 완료된 후 호출)
@@ -315,7 +315,7 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 | index  | number  | 아이템의 index                     |
 | active | boolean | 활성 여부                          |
 
-> 관련 예제 : [`커스텀 페이지`](Examples.md#커스텀-페이지) 
+> 관련 예제 : [커스텀 페이지](Examples.md#커스텀-페이지) 
 
 ## Methods
 
@@ -350,6 +350,6 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 ### `getActiveItemIndex()`[⬆](#methods-목차)
 현재 활성된 아이템의 index 반환
 
-## 다른 문서
+## 📖 다른 문서
 
 - [예제 (Examples)](./Examples.md) : 다양한 예제 및 코드를 제공합니다.
