@@ -2,7 +2,7 @@
   "name": "react-native-bit-swiper",
   "title": "React Native Bit Swiper",
   "version": "1.0.0",
-  "description": "Swiper component for React Native",
+  "description": "Swiper/Carousel component for React Native",
   "main": "src/index.js",
   "repository": {
     "type": "git",
@@ -43,7 +43,6 @@
   ],
   "author": "Young Chul Park",
   "license": "MIT",
-  "licenseFilename": "LICENSE",
   "readmeFilename": "README.md",
   "peerDependencies": {
     "react": "*",
