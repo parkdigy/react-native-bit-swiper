@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/react-native-bit-swiper.svg?style=flat)](https://www.npmjs.com/package/react-native-bit-swiper)
 ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 
-React Native Bit Swiper 는 다양한 기능을 제공하는 Swiper 컴포넌트입니다.
+이 컴포넌트는 다양한 기능을 제공하는 React Native 용 Swiper/Carousel 컴포넌트입니다.
 
 - 깜박임 없는 [`루프(Loop)`](docs/Examples.md#루프-loop), [`자동 스크롤(Autoplay)`](docs/Examples.md#자동-스크롤-autoplay) 기능을 제공합니다.
 - 커스텀 가능한 [`페이지(Paginate)`](docs/Examples.md#페이지-스타일) 기능을 제공합니다.
