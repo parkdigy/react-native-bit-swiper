@@ -33,41 +33,43 @@ import BitSwiper from 'react-native-bit-swiper';
 ```
 
 ---
-> ***예제 링크를 클릭하면, 상세 정보 및 소스 코드를 확인할 수 있습니다.***
+_각 예제의 제목을 클릭하면, 상세 정보 및 소스 코드를 확인할 수 있습니다._
 
-***[기본](docs/Examples.md#기본)***
+<br/>
+
+***![](docs/img/link.png) [기본](docs/Examples.md#기본)***
 
 <a href="docs/Examples.md#기본"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_basic.gif" width="300" height="166" /></a><br/>
 <br/>
 
-***[비활성 아이템 표시](docs/Examples.md#비활성-아이템-표시)***
+***![](docs/img/link.png) [비활성 아이템 표시](docs/Examples.md#비활성-아이템-표시)***
 
 <a href="docs/Examples.md#비활성-아이템-표시"><a href="docs/Examples.md#기본"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_inactive.gif" width="300" height="130" /></a><br/>
 <br/>
 
-***[루프 (Loop)](docs/Examples.md#루프-loop)***
+***![](docs/img/link.png) [루프 (Loop)](docs/Examples.md#루프-loop)***
 
 <a href="docs/Examples.md#루프-loop"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_loop.gif" width="300" height="130" /></a><br/>
 <br/>
 
-***[자동 스크롤 (Autoplay)](docs/Examples.md#자동-스크롤-autoplay)***
+***![](docs/img/link.png) [자동 스크롤 (Autoplay)](docs/Examples.md#자동-스크롤-autoplay)***
 
 <a href="docs/Examples.md#자동-스크롤-autoplay"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_autoplay.gif" width="300" height="130" /></a><br/>
  
 <a href="docs/Examples.md#자동-스크롤-autoplay"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_autoplay_loop.gif" width="300" height="130" /></a><br/>
 <br/>
 
-***[페이지 스타일](docs/Examples.md#페이지-스타일)***
+***![](docs/img/link.png) [페이지 스타일](docs/Examples.md#페이지-스타일)***
 
 <a href="docs/Examples.md#페이지-스타일"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_paginate.png" width="300" height="108" /></a><br/>
 <br/>
 
-***[커스텀 페이지](docs/Examples.md#커스텀-페이지)***
+***![](docs/img/link.png) [커스텀 페이지](docs/Examples.md#커스텀-페이지)***
 
 <a href="docs/Examples.md#커스텀-페이지"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_custom_paginate.gif" width="300" height="138" /></a><br/>
 <br/>
 
-***[아이템 정렬](docs/Examples.md#아이템-정렬)***
+***![](docs/img/link.png) [아이템 정렬](docs/Examples.md#아이템-정렬)***
 
 <a href="docs/Examples.md#아이템-정렬"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_itemalign_top.jpg" width="300" height="165" /></a><br/>
 
@@ -76,7 +78,7 @@ import BitSwiper from 'react-native-bit-swiper';
 <a href="docs/Examples.md#아이템-정렬"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_itemalign_bottom.jpg" width="300" height="165" /></a><br/>
 <br/>
 
-***[아이템 스케일 정렬](docs/Examples.md#아이템-스케일-정렬)***
+***![](docs/img/link.png) [아이템 스케일 정렬](docs/Examples.md#아이템-스케일-정렬)***
 
 <a href="docs/Examples.md#아이템-스케일-정렬"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_itemscalealign_top.gif" width="300" height="128" /></a><br/>
 
@@ -85,6 +87,6 @@ import BitSwiper from 'react-native-bit-swiper';
 <a href="docs/Examples.md#아이템-스케일-정렬"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_itemscalealign_bottom.gif" width="300" height="128" /></a><br/>
 <br/>
 
-***[예제 프로그램](docs/Examples.md#예제-프로그램)***
+***![](docs/img/link.png) [예제 프로그램](docs/Examples.md#예제-프로그램)***
 
 <a href="docs/Examples.md#예제-프로그램"><img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_app.jpg" width="300" height="647" /></a><br/>

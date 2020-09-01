@@ -50,7 +50,9 @@
 ## Props - 아이템 관련
 
 ### `initItemIndex`[⬆](#props-목차)
-최초에 표시(활성) 할 아이템의 index
+최초에 표시(활성) 할 아이템의 `index`
+
+[`items`](#items) 에 설정한 배열에서 표시 할 아이템의 `index` 를 지정합니다.
 
 | 타입    | 기본값  |
 | :----: | :---: |
@@ -58,6 +60,8 @@
 
 ### `items`[⬆](#props-목차)
 아이템 목록
+
+[`onItemReder`](#onitemrender) 이벤트에서 각 아이템의 UI를 렌더링합니다.
 
 | 타입   |
 | :---: |
@@ -67,6 +71,8 @@
 
 ### `itemWidth`[⬆](#props-목차)
 아이템의 넓이
+
+`%` 값으로 설정할 수 있고, 고정 `숫자` 값으로 설정 할 수도 있습니다.
 
 | 타입              | 기본값  |
 | :--------------: | :---: |
@@ -88,7 +94,9 @@
 ### `itemScaleAlign`[⬆](#props-목차)
 아이템 스케일 정렬 기준
 
-`activeItemScale`, `inactiveItemScale` 로 스케일을 지정했을 경우, 어느 위치로 기준할지 결정합니다. 
+[`activeItemScale`](#activeitemscale)
+[`inactiveItemScale`](#inactiveitemscale)
+값으로 스케일을 지정했을 경우, 어느 위치로 기준할지 결정합니다. 
 
 | 타입    | 기본값   | 유효한 값              |
 | :---:  | :---:  | ---                 |
@@ -139,6 +147,9 @@
 ### `inactiveItemOffset`[⬆](#props-목차)
 활성 아이템의 왼쪽/오른쪽에 표시할 비활성 아이템의 넓이
 
+[`itemWidth`](#itemwidth) 또는 [`activeItemScale`](#activeitemscale)
+값을 `100%` 이하로 설정해야 비활성 아이템이 보입니다.
+
 | 타입    | 기본값 |
 | :----: | :---: |
 | number | 0    |
@@ -152,9 +163,9 @@
 
 루프를 사용하면 왼쪽/오른쪽으로 무한히 스크롤 할 수 있습니다.
 
-- 기본적으로 아이템이 1개 일 때는 루프가 적용되지 않습니다.
-- 아이템이 1개 일 때 루프를 적용하려면, [`loopSingleItem`](#loopsingleitem) 값을 true 로 설정해야 합니다.
-- 루프 사용 시 [`loopCloneCount`](#loopclonecount)에 지정된 값 만큼 왼쪽/오른쪽에 아이템을 복사됩니다.
+기본적으로 아이템이 1개 일 때는 루프가 적용되지 않습니다. 아이템이 1개 일 때 루프를 적용하려면, [`loopSingleItem`](#loopsingleitem) 값을 `true` 로 설정해야 합니다.
+
+[`loopCloneCount`](#loopclonecount) 값으로 활성 아이템의 왼쪽/오른쪽에 아이템을 개수를 설정할 수 있습니다.
 
 | 타입     | 기본값  |
 | :----:  | :---: |
@@ -165,8 +176,8 @@
 ### `loopSingleItem`[⬆](#props-목차)
 아이템이 1개 일때 루프 사용 여부
 
-- 기본적으로 아이템이 1개 일 떄는 루프가 적용되지 않습니다.
-- 이 값을 true 로 설정하면 아이템이 1개 일 때 루프가 적용됩니다.
+기본적으로 아이템이 1개 일 떄는 루프가 적용되지 않습니다.
+이 값을 `true` 로 설정하면 아이템이 1개 일 때 루프가 적용됩니다.
 
 | 타입     | 기본값  |
 | :----:  | :---: |
@@ -177,9 +188,13 @@
 ### `loopCloneCount`[⬆](#props-목차)
 루프 사용 시 왼쪽/오른쪽에 복사 할 아이템 수
 
-| 타입    | 기본값 | 비고 |
-| :----: | :---: | --- |
-| number | 4    | 2 이상 권장 (2 미만 일 경우 Android 에서 깜박임 현상이 발생할 수 있습니다) |
+기본 아이템 목록 양 옆에 몇개의 아이템을 복사할지 설정할 수 있습니다.
+값을 `4` 로 설정하면, 왼쪽에 4개, 오른쪽에 4개를 복사합니다. 
+안드로이드에서 깜박임을 방지하라면, 최소 `2` 이상의 값을 사용해야합니다.
+
+| 타입    | 기본값 |
+| :----: | :---: |
+| number | 4    |
 
 > 관련 예제 : [루프 (Loop)](Examples.md#루프-loop)
 
@@ -195,7 +210,9 @@
 > 관련 예제 : [자동 스크롤 (Autoplay)](Examples.md#자동-스크롤-autoplay)
 
 ### `autoplayDelay`[⬆](#props-목차)
-최초 자동 스크롤 실행 시 대기 시간
+자동 스크롤 최초 대기 시간
+
+주어진 시간 만큼 최초 자동 스크롤 전에 지연됩니다.
 
 | 타입    | 기본값  | 단위             |
 | :----: | :---: | :-------------: |
@@ -205,6 +222,8 @@
 
 ### `autoplayInterval`[⬆](#props-목차)
 자동 스크롤 시간 간격
+
+주어진 시간 간격으로 자동 스크롤됩니다.
 
 | 타입    | 기본값  | 단위             |
 | :----: | :---: | :-------------: |
@@ -217,14 +236,18 @@
 ### `showPaginate`[⬆](#props-목차)
 페이지 영역 표시 여부
 
+기본적으로 페이지 영역이 표시됩니다. 페이지 영역을 표시하지 않으려면, 값을 `false` 로 설정해야합니다.
+
 | 타입     | 기본값  |
 | :----:  | :---: |
-| boolean | false |
+| boolean | true  |
 
 > 관련 예제 : [페이지 스타일](Examples.md#페이지-스타일)
 
 ### `paginateStyle`[⬆](#props-목차)
-패이지 영역 스타일 (스타일을 지정하면, 기본 스타일에 병합됩니다)
+패이지 영역 스타일
+
+이 값을 설정하면, 기본 스타일에 **병합**됩니다
 
 ***기본 스타일***
 ```javascript
@@ -239,7 +262,9 @@
 > 관련 예제 : [페이지 스타일](Examples.md#페이지-스타일)
 
 ### `paginateDotStyle`[⬆](#props-목차)
-페이지 영역의 기본(비활성) 도트 스타일 (스타일을 지정하면, 기본 스타일이 대체됩니다)
+페이지 영역의 기본(비활성) 도트 스타일
+
+이 값을 설정하면, 기본 스타일이 **대체**됩니다
 
 ***기본 스타일***
 ```javascript
@@ -255,7 +280,9 @@
 > 관련 예제 : [페이지 스타일](Examples.md#페이지-스타일)
 
 ### `paginateActiveDotStyle`[⬆](#props-목차)
-페이지 영역의 활성 도트 스타일 (스타일을 지정하면, 기본 스타일이 대체됩니다)
+페이지 영역의 활성 도트 스타일
+ 
+이 값을 설정하면, 기본 스타일이 **대체**됩니다
 
 ***기본 스타일***
 ```javascript
@@ -273,10 +300,16 @@
 ## Events
 
 ### `onLayout`[⬆](#events-목차)
-Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포넌트의 onLayout 이벤트 상속)
+최상단 View 컴포넌트 레이아웃 변경 이벤트
+
+View 컴포넌트의 onLayout 이벤트를 상속합니다.
+
+> 참조 : [`React Native 공식 문서`](https://reactnative.dev/docs/view#onlayout)
 
 ### `onItemRender`[⬆](#events-목차)
-아이템 render 이벤트 ([`items`](#items) Props의 각 item 별로 호출)
+아이템 렌더링 이벤트
+ 
+[`items`](#items) 배열의 각 아이템 별로 호출됩니다.
 
 ***Parameters***
 
@@ -288,7 +321,9 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 > 관련 예제 : [기본](Examples.md#기본) 
 
 ### `onItemIndexChange`[⬆](#events-목차)
-활성 아이템 변경 이벤트 (스크롤이 완료된 후 호출)
+활성 아이템 변경 이벤트
+
+**스크롤 완료** 후 활성 아이템이 변경되면 호출됩니다.
 
 ***Parameters***
 
@@ -297,7 +332,9 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 | index | number | 활성 아이템의 index |
 
 ### `onItemIndexChanging`[⬆](#events-목차)
-활성 아이템 변경 이벤트 (스크롤 중 호출)
+활성 아이템 변경 이벤트
+
+**스크롤 중** 활성 아이템이 변경되면 호출됩니다.
 
 ***Parameters***
 
@@ -306,7 +343,9 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 | index | number | 활성 아이템의 index |
 
 ### `onPaginateDotRender`[⬆](#events-목차)
-페이지 영역의 도트 render 이벤트 ([`items`](#items) Props의 각 item 별로 호출)
+페이지 영역의 도트 렌더링 이벤트
+ 
+[`items`](#items) 배열의 각 아이템 별로 호출됩니다.
 
 ***Parameters***
 
@@ -320,7 +359,7 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 ## Methods
 
 ### `activeItem(index, animated)`[⬆](#methods-목차)
-주어진 index 의 아이템을 활성 시킴
+주어진 `index` 의 아이템을 활성 시킵니다.
 
 ***Parameters***
 
@@ -330,7 +369,7 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 | animated | boolean | N     | true  | 스크롤 애니메이션 적용 여부  |
 
 ### `activeNextItem(animated)`[⬆](#methods-목차)
-다음 아이템을 활성화 시킴
+현재 활성된 아이템의 다음 아이템을 활성화 시킵니다.
 
 ***Parameters***
 
@@ -339,7 +378,7 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 | animated | boolean | N     | true  | 스크롤 애니메이션 적용 여부  |
 
 ### `activePrevItem(animated)`[⬆](#methods-목차)
-이전 아이템 활성화 시킴
+현재 활성된 아이템의 이전 아이템 활성화 시킵니다.
 
 ***Parameters***
 
@@ -348,7 +387,7 @@ Swiper의 최상단 View 컴포넌트 레이아웃 변경 이벤트 (View 컴포
 | animated | boolean | N     | true  | 스크롤 애니메이션 적용 여부  |
 
 ### `getActiveItemIndex()`[⬆](#methods-목차)
-현재 활성된 아이템의 index 반환
+현재 활성된 아이템의 `index` 반환합니다.
 
 ## 📖 다른 문서
 
