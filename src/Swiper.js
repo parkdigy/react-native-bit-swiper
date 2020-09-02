@@ -530,7 +530,9 @@ class Swiper extends React.Component {
 
       const scaledItemWidth = this.$realItemWidth * scale;
       translateX =
-        (((this.$width - scaledItemWidth) / 2 / scale + inactiveItemOffset) * (translateDelta - item.x)) / this.$width;
+        (((this.$width - scaledItemWidth) / 2 / scale + inactiveItemOffset / inactiveItemScale) *
+          (translateDelta - item.x)) /
+        this.$width;
     }
 
     if (itemHeight > 0) {
