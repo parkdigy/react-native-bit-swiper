@@ -1,11 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-} from 'react-native';
+import {StyleSheet, View, Text, TouchableOpacity} from 'react-native';
 import RNBitSwiper from 'react-native-bit-swiper';
 import Button from './Button';
 import Options from './Options';
@@ -85,10 +79,7 @@ const MainView = () => {
             swiperRef.current.activeItem(index);
           }
         }}>
-        <Text
-          style={active ? styles.customActiveDotText : styles.customDotText}>
-          {index + 1}
-        </Text>
+        <Text style={active ? styles.customActiveDotText : styles.customDotText}>{index + 1}</Text>
       </TouchableOpacity>
     );
   };
@@ -119,9 +110,7 @@ const MainView = () => {
           showPaginate={showPaginate}
           onItemRender={handleItemRender}
           onItemIndexChange={handleItemIndexChange}
-          onPaginateDotRender={
-            customPaginateDot ? handlePaginateDotRender : null
-          }
+          onPaginateDotRender={customPaginateDot ? handlePaginateDotRender : null}
         />
       </View>
 

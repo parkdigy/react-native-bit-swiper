@@ -18,16 +18,7 @@ const propTypes = {
   onRadioChange: PropTypes.func,
 };
 
-const OptionItem = ({
-  children,
-  title,
-  titleHelp,
-  help,
-  row,
-  radioItems,
-  radioValue,
-  onRadioChange,
-}) => {
+const OptionItem = ({children, title, titleHelp, help, row, radioItems, radioValue, onRadioChange}) => {
   const handleButtonPress = (value) => {
     if (onRadioChange) {
       onRadioChange(value);

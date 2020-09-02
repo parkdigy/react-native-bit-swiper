@@ -1,13 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Platform,
-  StyleSheet,
-  ScrollView,
-  View,
-  ViewPropTypes,
-  Text,
-} from 'react-native';
+import {Platform, StyleSheet, ScrollView, View, ViewPropTypes, Text} from 'react-native';
 import * as Util from './Util';
 import SwiperItem from './SwiperItem';
 import SwiperPaginate from './SwiperPaginate';
@@ -134,20 +127,11 @@ class Swiper extends React.Component {
 
     if (
       prevProps == null ||
-      Util.isPropsChanged(props, prevProps, [
-        'items',
-        'itemWidth',
-        'loop',
-        'loopCloneCount',
-        'loopSingleItem',
-      ])
+      Util.isPropsChanged(props, prevProps, ['items', 'itemWidth', 'loop', 'loopCloneCount', 'loopSingleItem'])
     ) {
       if (this.$width != null) {
         if (props.itemWidth !== prevProps.itemWidth) {
-          this.$realItemWidth = this.getRealItemWidth(
-            this.$width,
-            props.itemWidth,
-          );
+          this.$realItemWidth = this.getRealItemWidth(this.$width, props.itemWidth);
         }
 
         isResetItems = true;
@@ -173,21 +157,11 @@ class Swiper extends React.Component {
       }
     }
 
-    if (
-      prevProps == null ||
-      Util.isPropsChanged(props, prevProps, ['autoplayDelay'])
-    ) {
+    if (prevProps == null || Util.isPropsChanged(props, prevProps, ['autoplayDelay'])) {
       this.$autoplayDelayed = false;
     }
 
-    if (
-      prevProps == null ||
-      Util.isPropsChanged(props, prevProps, [
-        'autoplay',
-        'autoplayDelay',
-        'autoplayInterval',
-      ])
-    ) {
+    if (prevProps == null || Util.isPropsChanged(props, prevProps, ['autoplay', 'autoplayDelay', 'autoplayInterval'])) {
       if (props.autoplay) {
         this.nextTick(() => {
           this.startAutoplayTimer();
@@ -345,12 +319,7 @@ class Swiper extends React.Component {
       return;
     }
 
-    const {
-      autoplay,
-      showPaginate,
-      onItemIndexChanging,
-      onItemIndexChange,
-    } = this.props;
+    const {autoplay, showPaginate, onItemIndexChanging, onItemIndexChange} = this.props;
     const {items, baseItemIndex} = this.state;
 
     if (items == null) return;
@@ -421,11 +390,7 @@ class Swiper extends React.Component {
           () => {
             this.$scrollToBaseTimer = null;
 
-            const {
-              loopCloneCount,
-              inactiveItemScale,
-              inactiveItemOffset,
-            } = this.props;
+            const {loopCloneCount, inactiveItemScale, inactiveItemOffset} = this.props;
             const {items, baseItemCount} = this.state;
 
             const itemIndex = this.getItemIndex(this.$lastScrollPos);
@@ -434,40 +399,25 @@ class Swiper extends React.Component {
               const item = items[itemIndex];
 
               if (item && itemIndex !== loopCloneCount + item.baseIndex) {
-                const toActiveItemIndex =
-                  loopCloneCount + items[itemIndex].baseIndex;
+                const toActiveItemIndex = loopCloneCount + items[itemIndex].baseIndex;
                 const toActiveItem = items[toActiveItemIndex];
 
                 // 활성 아이템의 transform 설정
-                toActiveItem.transform = this.getItemTransform(
-                  toActiveItem.x,
-                  toActiveItemIndex,
-                );
+                toActiveItem.transform = this.getItemTransform(toActiveItem.x, toActiveItemIndex);
                 if (!isIos && toActiveItem.ref.current) {
                   toActiveItem.ref.current.setTransform(toActiveItem.transform);
                 }
 
                 // 사이드 비활성 아이템의 transform 설정
-                [toActiveItemIndex - 1, toActiveItemIndex + 1].forEach(
-                  (sideInactiveItemIndex) => {
-                    if (Util.isIndexIn(sideInactiveItemIndex, items.length)) {
-                      const sideInactiveItem = items[sideInactiveItemIndex];
-                      sideInactiveItem.transform = this.getItemTransform(
-                        toActiveItem.x,
-                        sideInactiveItemIndex,
-                      );
-                      if (
-                        !isIos &&
-                        sideInactiveItem.ref.current &&
-                        itemIndex !== sideInactiveItemIndex
-                      ) {
-                        sideInactiveItem.ref.current.setTransform(
-                          sideInactiveItem.transform,
-                        );
-                      }
+                [toActiveItemIndex - 1, toActiveItemIndex + 1].forEach((sideInactiveItemIndex) => {
+                  if (Util.isIndexIn(sideInactiveItemIndex, items.length)) {
+                    const sideInactiveItem = items[sideInactiveItemIndex];
+                    sideInactiveItem.transform = this.getItemTransform(toActiveItem.x, sideInactiveItemIndex);
+                    if (!isIos && sideInactiveItem.ref.current && itemIndex !== sideInactiveItemIndex) {
+                      sideInactiveItem.ref.current.setTransform(sideInactiveItem.transform);
                     }
-                  },
-                );
+                  }
+                });
 
                 if (!isIos && inactiveItemOffset !== 0) {
                   // 안드로이드에서 사이드 비활성 아이템의 깜박임 방지
@@ -487,18 +437,11 @@ class Swiper extends React.Component {
                     if (Util.isIndexIn(lr2Index, items.length)) {
                       const lr2Item = items[lr2Index];
                       if (lr2Item.ref.current) {
-                        lr2Item.transform = this.getItemTransform(
-                          items[lr2TransformBaseIndex].x,
-                          lr2Index,
-                        );
+                        lr2Item.transform = this.getItemTransform(items[lr2TransformBaseIndex].x, lr2Index);
                         if (toActiveItemIndex > itemIndex) {
-                          lr2Item.transform.translateX -=
-                            (this.$width / inactiveItemScale) *
-                            (baseItemCount * 2);
+                          lr2Item.transform.translateX -= (this.$width / inactiveItemScale) * (baseItemCount * 2);
                         } else {
-                          lr2Item.transform.translateX +=
-                            (this.$width / inactiveItemScale) *
-                            (baseItemCount * 2);
+                          lr2Item.transform.translateX += (this.$width / inactiveItemScale) * (baseItemCount * 2);
                         }
                         lr2Item.ref.current.setTransform(lr2Item.transform);
                       }
@@ -583,14 +526,11 @@ class Swiper extends React.Component {
 
     if (delta != null) {
       scale = inactiveItemScale + (activeItemScale - inactiveItemScale) * delta;
-      opacity =
-        inactiveItemOpacity + (activeItemOpacity - inactiveItemOpacity) * delta;
+      opacity = inactiveItemOpacity + (activeItemOpacity - inactiveItemOpacity) * delta;
 
       const scaledItemWidth = this.$realItemWidth * scale;
       translateX =
-        (((this.$width - scaledItemWidth) / 2 / scale + inactiveItemOffset) *
-          (translateDelta - item.x)) /
-        this.$width;
+        (((this.$width - scaledItemWidth) / 2 / scale + inactiveItemOffset) * (translateDelta - item.x)) / this.$width;
     }
 
     if (itemHeight > 0) {
@@ -642,9 +582,7 @@ class Swiper extends React.Component {
           }
         }
       },
-      this.$autoplayDelayed
-        ? autoplayInterval
-        : autoplayDelay + autoplayInterval,
+      this.$autoplayDelayed ? autoplayInterval : autoplayDelay + autoplayInterval,
     );
   }
 
@@ -660,9 +598,7 @@ class Swiper extends React.Component {
   canLoop() {
     const {loop, loopSingleItem} = this.props;
     const {items} = this.state;
-    return (
-      loop && items && items.length > 0 && (loopSingleItem || items.length > 1)
-    );
+    return loop && items && items.length > 0 && (loopSingleItem || items.length > 1);
   }
 
   nextTickScrollTo(index, animated) {
@@ -802,9 +738,7 @@ class Swiper extends React.Component {
     } = this.props;
     const {items, baseItemCount, contentOffset} = this.state;
 
-    const renderItems = propsItems.map(
-      (item, index) => onItemRender && onItemRender(item, index),
-    );
+    const renderItems = propsItems.map((item, index) => onItemRender && onItemRender(item, index));
 
     let itemJustifyContent;
     switch (itemAlign) {
@@ -820,9 +754,7 @@ class Swiper extends React.Component {
     }
 
     return (
-      <View
-        style={[styles.container, style]}
-        onLayout={this.handleContainerLayout}>
+      <View style={[styles.container, style]} onLayout={this.handleContainerLayout}>
         {items && (
           <>
             <ScrollView
@@ -848,12 +780,8 @@ class Swiper extends React.Component {
                     justifyContent: itemJustifyContent,
                   }}
                   transform={item.transform}>
-                  <View style={{width: this.$realItemWidth || this.$width}}>
-                    {renderItems[item.baseIndex]}
-                  </View>
-                  {showIndexText && (
-                    <Text style={styles.indexText}>{index}</Text>
-                  )}
+                  <View style={{width: this.$realItemWidth || this.$width}}>{renderItems[item.baseIndex]}</View>
+                  {showIndexText && <Text style={styles.indexText}>{index}</Text>}
                 </SwiperItem>
               ))}
             </ScrollView>

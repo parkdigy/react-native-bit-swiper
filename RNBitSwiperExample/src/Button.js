@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {StyleSheet, TouchableOpacity, Text, ViewPropTypes} from 'react-native';
+import {StyleSheet, TouchableOpacity, Text} from 'react-native';
 
 const propTypes = {
   active: PropTypes.bool,
@@ -10,14 +10,9 @@ const defaultColor = '#20a8d8';
 
 const Button = ({children, style, active, ...props}) => {
   return (
-    <TouchableOpacity
-      style={[styles.button, active && styles.buttonActive, style]}
-      activeOpacity={0.8}
-      {...props}>
+    <TouchableOpacity style={[styles.button, active && styles.buttonActive, style]} activeOpacity={0.8} {...props}>
       {['string', 'number'].includes(typeof children) ? (
-        <Text style={[styles.text, active && styles.textActive]}>
-          {children}
-        </Text>
+        <Text style={[styles.text, active && styles.textActive]}>{children}</Text>
       ) : (
         children
       )}

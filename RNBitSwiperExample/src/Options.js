@@ -44,9 +44,7 @@ const Options = ({
   onCustomPaginateDotChange,
 }) => {
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.scrollViewContentContainer}>
+    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContentContainer}>
       <Text style={styles.optionTitle}>Item</Text>
 
       {/* itemWidth */}
@@ -180,10 +178,7 @@ const Options = ({
 
       {/* loopSingleItem */}
       <OptionItem title="loopSingleItem" titleHelp="default: false" row>
-        <Switch
-          value={loopSingleItem}
-          onChange={() => onLoopSingleItemChange(!loopSingleItem)}
-        />
+        <Switch value={loopSingleItem} onChange={() => onLoopSingleItemChange(!loopSingleItem)} />
       </OptionItem>
 
       {/* loopCloneCount */}
@@ -242,18 +237,12 @@ const Options = ({
 
       {/* showPaginate */}
       <OptionItem title="showPaginate" titleHelp="default: true" row>
-        <Switch
-          value={showPaginate}
-          onChange={() => onShowPaginateChange(!showPaginate)}
-        />
+        <Switch value={showPaginate} onChange={() => onShowPaginateChange(!showPaginate)} />
       </OptionItem>
 
       {/* customPaginateDot */}
       <OptionItem title="Use custom paginate dot" row>
-        <Switch
-          value={customPaginateDot}
-          onChange={() => onCustomPaginateDotChange(!customPaginateDot)}
-        />
+        <Switch value={customPaginateDot} onChange={() => onCustomPaginateDotChange(!customPaginateDot)} />
       </OptionItem>
     </ScrollView>
   );

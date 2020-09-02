@@ -99,8 +99,7 @@ class SwiperItem extends React.Component {
   render() {
     const {style, children} = this.props;
     const {transform} = this.state;
-    const {scale, translateX, translateY, zIndex, opacity} =
-      transform || defaultTransform;
+    const {scale, translateX, translateY, zIndex, opacity} = transform || defaultTransform;
 
     const transformStyle = {transform: []};
 
