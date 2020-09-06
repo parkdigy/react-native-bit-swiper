@@ -11,9 +11,15 @@
 - [`아이템 정렬`](docs/Examples.md#아이템-정렬), [`아이템 스케일 정렬`](docs/Examples.md#아이템-스케일-정렬) 기능을 제공합니다.
 - 다양한 기능을 실시간으로 테스트할 수 있는 [`예제 프로그램`](docs/Examples.md#예제-프로그램)을 제공합니다.
 
+## 📝 업데이트
+- [`v1.1.0`](docs/Update.md#v110) : 애니메이션 성능 및 안정성 향상
+- [`v1.0.2`](docs/Update.md#v102) : 비활성 아이템 표시 넓이가 다르게 표시되는 현상 수정
+- [`v1.0.1`](docs/Update.md#v101) : 최초 배포
+
 ## 📖 문서
 - [API 명세서 (API Reference)](docs/ApiReference.md) : 사용 가능한 Props, Event, Method 에 대한 상세 정보를 제공합니다.
 - [예제 (Examples)](docs/Examples.md) : 다양한 예제 및 코드를 제공합니다.
+- [업데이트 (Update)](docs/Update.md) : 업데이트의 상세 정보를 제공합니다.
 
 ## 📦 설치
 ```
