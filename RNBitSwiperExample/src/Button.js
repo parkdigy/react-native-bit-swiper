@@ -3,16 +3,22 @@ import PropTypes from 'prop-types';
 import {StyleSheet, TouchableOpacity, Text} from 'react-native';
 
 const propTypes = {
+  textColor: PropTypes.string,
   active: PropTypes.bool,
 };
 
 const defaultColor = '#20a8d8';
 
-const Button = ({children, style, active, ...props}) => {
+const Button = ({children, style, textColor, active, ...props}) => {
+  const textStyle = {};
+  if (textColor != null) {
+    textStyle.color = textColor;
+  }
+
   return (
     <TouchableOpacity style={[styles.button, active && styles.buttonActive, style]} activeOpacity={0.8} {...props}>
       {['string', 'number'].includes(typeof children) ? (
-        <Text style={[styles.text, active && styles.textActive]}>{children}</Text>
+        <Text style={[styles.text, textStyle, active && styles.textActive]}>{children}</Text>
       ) : (
         children
       )}

@@ -1,13 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Platform, StyleSheet, ScrollView, View, ViewPropTypes, Text} from 'react-native';
+import {Platform, Dimensions, StyleSheet, View, ViewPropTypes, Animated} from 'react-native';
 import * as Util from './Util';
+import Animation from './Animation';
+import Item from './Item';
 import SwiperItem from './SwiperItem';
 import SwiperPaginate from './SwiperPaginate';
 
 // 디버그용
 const ll = console.log;
-const showIndexText = false;
+const showDebugIndex = false;
+const disableUpdateUI = false;
+const disableMoveToBase = false;
 
 const isIos = Platform.OS === 'ios';
 const toFixedFractionDigits = 5;
@@ -18,8 +22,8 @@ class Swiper extends React.Component {
     items: PropTypes.array,
     initItemIndex: PropTypes.number,
     itemWidth: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    itemAlign: PropTypes.oneOf(['top', 'middle', 'bottom']),
-    itemScaleAlign: PropTypes.oneOf(['top', 'middle', 'bottom']),
+    itemAlign: PropTypes.oneOf(Item.Align.$all),
+    itemScaleAlign: PropTypes.oneOf(Item.ScaleAlign.$all),
 
     // active item
     activeItemScale: PropTypes.number,
@@ -57,8 +61,8 @@ class Swiper extends React.Component {
   static defaultProps = {
     initItemIndex: 0,
     itemWidth: '100%',
-    itemAlign: 'top',
-    itemScaleAlign: 'middle',
+    itemAlign: Item.Align.Top,
+    itemScaleAlign: Item.ScaleAlign.Middle,
     activeItemScale: 1,
     activeItemOpacity: 1,
     inactiveItemScale: 1,
@@ -80,9 +84,13 @@ class Swiper extends React.Component {
     baseItemIndex: 0, // items 에서 원본 아이템의 시작 위치
     baseItemCount: 0, // 원본 아이템 수
     contentOffset: {}, // ScrollView 에서 이동할 스크롤 위치 - iOS 에서 사용
+    animationInputRangeType: null,
+    realLoopCloneCount: 0, // 실제 LoopCloneCount
   };
 
   //--------------------------------------------------------------------------------------------------------------------
+
+  $animation = new Animation();
 
   $paginateRef = React.createRef(); // 페이지 UI 의 ref
   $scrollViewRef; // ScrollView 의 ref
@@ -90,108 +98,189 @@ class Swiper extends React.Component {
   $width; // 컨테이너의 넓이
   $realItemWidth; // 실제 아이템 넓이 - Props 의 itemWidth 값에서 계산된 실제 넓이
   $scrollContentSize; // ScrollView 의 컨텐츠 크기
-  $scrollDragging = false; // ScrollView 의 드레그 중인지 여부
   $scrollToBaseTimer; // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer
   $lastScrollPos; // ScrollView 의 마지막 스크롤 위치
   $autoplayTimer; // 자동 스크롤 Timer
   $autoplayDelayed = false; // 자동 스크롤 delay 사용 여부
   $lastActiveChangeBaseItemIndex = 0; // 활성화 된 원본 아이템 Index
   $lastActiveChangingBaseItemIndex = 0; // 스크롤 중 활성화 된 원본 아이템 Index
-
-  // 디버그용
-  $disableUpdateUI = false;
+  $isScrolling = false; // 스크롤 중인지 여부
+  $scrollToIndexWhenEndScrolling = null; // 스크롤 완료 시 이동할 index
+  $scrollToIndexWhenScrollContentSizeChange = null; // 컨텐츠 사이즈 변경 시 이동할 index (안드로이드에서만 사용)
+  $lastAnimatedScrollToIndex = null; // 마지막 __scrollTo 호출 index (animated=true 인 경우)
 
   //--------------------------------------------------------------------------------------------------------------------
 
   componentDidMount() {
-    this.init(this.props);
+    this.__init(this.props, null, this.state);
   }
 
   componentWillUnmount() {
-    this.stopAutoplayTimer();
-    this.stopScrollToBaseTimer();
+    this.__stopAutoplayTimer();
+    this.__stopScrollToBaseTimer();
   }
 
   shouldComponentUpdate(nextProps, nextState, nextContext) {
     if (this.props !== nextProps) {
-      this.init(nextProps, this.props);
+      this.__init(nextProps, this.props, nextState);
     }
 
-    return true;
+    return this.state !== nextState;
+  }
+
+  // public ------------------------------------------------------------------------------------------------------------
+
+  activeItem(index, animated = true) {
+    const {baseItemCount, baseItemIndex} = this.state;
+    if (Util.isIndexIn(index, baseItemCount)) {
+      this.__scrollTo(baseItemIndex + index, animated);
+    }
+  }
+
+  activePrevItem(animated = true) {
+    let itemIndex;
+    if (this.$lastAnimatedScrollToIndex != null) {
+      itemIndex = this.$lastAnimatedScrollToIndex - 1;
+    } else {
+      itemIndex = this.__getItemIndex(this.$lastScrollPos, true) - 1;
+    }
+    const {items} = this.state;
+    if (items && Util.isIndexIn(itemIndex, items.length)) {
+      this.__scrollTo(itemIndex, animated);
+    }
+  }
+
+  activeNextItem(animated = true) {
+    let itemIndex;
+    if (this.$lastAnimatedScrollToIndex != null) {
+      itemIndex = this.$lastAnimatedScrollToIndex + 1;
+    } else {
+      itemIndex = this.__getItemIndex(this.$lastScrollPos, true) + 1;
+    }
+    const {items} = this.state;
+    if (items && Util.isIndexIn(itemIndex, items.length)) {
+      this.__scrollTo(itemIndex, animated);
+    }
+  }
+
+  activeFirstItem(animated = true) {
+    this.activeItem(0, animated);
+  }
+
+  activeLastItem(animated = true) {
+    this.activeItem(this.state.baseItemCount - 1, animated);
+  }
+
+  getActiveItemIndex() {
+    const itemIndex = this.__getItemIndex(this.$lastScrollPos, true) - 1;
+    const {items} = this.state;
+    if (Util.isIndexIn(itemIndex, items.length)) {
+      return items[itemIndex].baseIndex;
+    } else {
+      return items[items.length - 1].baseIndex;
+    }
   }
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  init(props, prevProps) {
-    let isResetItems = false;
+  __init(props, prevProps, state) {
+    let makeItems = false;
+    let forceUpdate = false;
 
-    if (
-      prevProps == null ||
-      Util.isPropsChanged(props, prevProps, ['items', 'itemWidth', 'loop', 'loopCloneCount', 'loopSingleItem'])
-    ) {
-      if (this.$width != null) {
-        if (props.itemWidth !== prevProps.itemWidth) {
-          this.$realItemWidth = this.getRealItemWidth(this.$width, props.itemWidth);
-        }
-
-        isResetItems = true;
-
-        this.makeItems(props);
-      }
+    const animationInputRangeType = this.__getAnimationInputRangeType(props);
+    if (state.animationInputRangeType !== animationInputRangeType) {
+      makeItems = true;
     }
 
-    if (!isResetItems) {
-      if (
-        prevProps == null ||
-        Util.isPropsChanged(props, prevProps, [
-          'itemAlign',
-          'itemScaleAlign',
-          'activeItemScale',
-          'activeItemOpacity',
-          'inactiveItemScale',
-          'inactiveItemOpacity',
-          'inactiveItemOffset',
-        ])
-      ) {
-        this.nextTickUpdateUI();
-      }
-    }
-
-    if (prevProps == null || Util.isPropsChanged(props, prevProps, ['autoplayDelay'])) {
+    if (prevProps != null && Util.isPropsChanged(props, prevProps, ['autoplayDelay'])) {
       this.$autoplayDelayed = false;
     }
 
-    if (prevProps == null || Util.isPropsChanged(props, prevProps, ['autoplay', 'autoplayDelay', 'autoplayInterval'])) {
-      if (props.autoplay) {
-        this.nextTick(() => {
-          this.startAutoplayTimer();
-        });
-      } else {
-        this.stopAutoplayTimer();
+    if (prevProps != null && Util.isPropsChanged(props, prevProps, ['loopCloneCount'])) {
+      if (this.__canLoop(props.loop, props.loopSingleItem, props.items.length)) {
+        const realLoopCloneCount = this.__getRealLoopCloneCount(
+          props.loopCloneCount,
+          animationInputRangeType,
+          props.items.length,
+        );
+        if (state.realLoopCloneCount !== realLoopCloneCount) {
+          makeItems = true;
+        }
       }
     }
 
     if (
+      !makeItems &&
+      (prevProps == null || Util.isPropsChanged(props, prevProps, ['items', 'itemWidth', 'loop', 'loopSingleItem']))
+    ) {
+      makeItems = true;
+    }
+
+    if (!makeItems && prevProps != null && Util.isPropsChanged(props, prevProps, ['itemAlign'])) {
+      forceUpdate = true;
+    }
+
+    if (
+      prevProps == null ||
+      Util.isPropsChanged(props, prevProps, ['itemWidth', 'inactiveItemScale', 'inactiveItemOffset'])
+    ) {
+      if (this.$width != null) {
+        this.__resetItemWidthAndTranslateX(props, state, !makeItems);
+        forceUpdate = true;
+      }
+    }
+
+    if (prevProps == null || Util.isPropsChanged(props, prevProps, ['activeItemOpacity', 'inactiveItemOpacity'])) {
+      this.__resetAnimationOpacity(props, state, !makeItems);
+      forceUpdate = true;
+    }
+
+    if (prevProps == null || Util.isPropsChanged(props, prevProps, ['activeItemScale', 'inactiveItemScale'])) {
+      this.__resetAnimationScale(props, state, !makeItems);
+      forceUpdate = true;
+    }
+
+    if (
+      !makeItems &&
+      !forceUpdate &&
       prevProps != null &&
       Util.isPropsChanged(props, prevProps, [
+        'itemScaleAlign',
         'showPaginate',
         'paginateStyle',
         'paginateDotStyle',
         'paginateActiveDotStyle',
+        'onPaginateDotRender',
       ])
     ) {
+      forceUpdate = true;
+    }
+
+    if (prevProps == null || Util.isPropsChanged(props, prevProps, ['autoplay', 'autoplayDelay', 'autoplayInterval'])) {
+      if (props.autoplay) {
+        Util.nextTick(() => {
+          this.__startAutoplayTimer();
+        });
+      } else {
+        this.__stopAutoplayTimer();
+      }
+    }
+
+    if (makeItems) {
+      this.__makeItems(props);
+    } else if (forceUpdate) {
       this.forceUpdate();
     }
   }
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  reset() {
-    this.stopScrollToBaseTimer();
-    this.stopAutoplayTimer();
+  __reset() {
+    this.__stopScrollToBaseTimer();
+    this.__stopAutoplayTimer();
 
     this.$scrollViewRef = null;
-    this.$scrollContentSize = null;
+    this.$scrollContentSize = 0;
     this.$lastScrollPos = null;
     this.$lastActiveChangeBaseItemIndex = 0;
     this.$lastActiveChangingBaseItemIndex = 0;
@@ -204,35 +293,41 @@ class Swiper extends React.Component {
     });
   }
 
-  makeItems(props) {
+  __makeItems(props) {
+    if (this.$width == null) {
+      return;
+    }
+
     const {
       initItemIndex: propsInitItemIndex,
       items: propsItems,
       loop,
-      loopSingleItem,
       loopCloneCount,
+      loopSingleItem,
       showPaginate,
     } = props;
     const {items: stateItems} = this.state;
 
-    this.stopScrollToBaseTimer();
+    this.__stopScrollToBaseTimer();
 
     if (propsItems == null || propsItems.length === 0) {
-      this.reset();
+      this.__reset();
     } else {
+      const animationInputRangeType = this.__getAnimationInputRangeType(props);
+
       // 원본 아이템
-      const baseItems = propsItems.map((item, index) => ({
-        data: item,
-        baseIndex: index,
-        height: 0,
-      }));
+      const baseItems = propsItems.map(
+        (data, index) => new Item(Item.Type.Base, data, propsItems.length, index, this.$animation),
+      );
+
+      const baseItemCount = baseItems.length;
 
       // 시작 아이템 Index
       let initItemIndex = 0;
 
       if (stateItems != null && stateItems.length > 0) {
         const lastScrollPos = this.$lastScrollPos || 0;
-        const lastItemIndex = Math.round(this.getItemIndex(lastScrollPos));
+        const lastItemIndex = this.__getItemIndex(lastScrollPos, true);
         if (Util.isIndexIn(lastItemIndex, stateItems.length)) {
           initItemIndex = stateItems[lastItemIndex].baseIndex;
         }
@@ -242,64 +337,122 @@ class Swiper extends React.Component {
 
       if (initItemIndex < 0) {
         initItemIndex = 0;
-      } else if (initItemIndex >= baseItems.length) {
-        initItemIndex = baseItems.length - 1;
+      } else if (initItemIndex >= baseItemCount) {
+        initItemIndex = baseItemCount - 1;
       }
 
       // 아이템
-      let items = [...baseItems];
+      const items = [...baseItems];
       let baseItemIndex = 0;
 
       // Loop 시 아이템 추가
-      if (loop && (items.length > 1 || loopSingleItem)) {
-        const maxIndex = baseItems.length - 1;
-        for (let i = 0; i < loopCloneCount; i += 1) {
-          let unshiftIndex = maxIndex - (i % baseItems.length);
-          const shiftIndex = Math.abs(i % baseItems.length);
+      let realLoopCloneCount = 0;
+      if (this.__canLoop(loop, loopSingleItem, baseItems.length)) {
+        realLoopCloneCount = this.__getRealLoopCloneCount(loopCloneCount, animationInputRangeType, items.length);
 
-          items.unshift({...baseItems[unshiftIndex]});
-          items.push({...baseItems[shiftIndex]});
+        const maxIndex = baseItemCount - 1;
+
+        let distanceFromBase = 0;
+        for (let i = 0; i < realLoopCloneCount; i += 1) {
+          let leftCloneIndex = maxIndex - (i % baseItemCount);
+          const rightCloneIndex = Math.abs(i % baseItemCount);
+
+          distanceFromBase += 1;
+
+          const leftCloneItem = baseItems[leftCloneIndex].clone(Item.Type.LeftClone);
+          leftCloneItem.distanceFromBase = -distanceFromBase;
+          items.unshift(leftCloneItem);
+
+          const rightCloneItem = baseItems[rightCloneIndex].clone(Item.Type.RightClone);
+          rightCloneItem.distanceFromBase = distanceFromBase;
+          items.push(rightCloneItem);
         }
 
-        baseItemIndex = loopCloneCount;
+        baseItemIndex = realLoopCloneCount;
       }
 
-      // 아이템의 ref 및 위치 설정
-      items = items.map((item, index) => ({
-        ...item,
-        ref: React.createRef(),
-        x: index * this.$width,
-      }));
+      // 기본 정보 설정
+      items.forEach((item, index) => {
+        item.index = index;
+        item.x = index * this.$width;
+      });
+
+      // 애니메이션 정보 설정
+      let animationInputRanges = null;
+
+      if (animationInputRangeType === Animation.InputRangeType.Items) {
+        animationInputRanges = {
+          type: Animation.InputRangeType.Items,
+          ...items.reduce(
+            (v, item, index) => {
+              v.items.push(item);
+              v.values.push(index * this.$width);
+              return v;
+            },
+            {
+              items: [],
+              values: [],
+            },
+          ),
+        };
+      }
+
+      // 아이템 정보 설정
+      items.forEach((item, index) => {
+        if (animationInputRangeType === Animation.InputRangeType.Item) {
+          animationInputRanges = {
+            type: Animation.InputRangeType.Item,
+            values: [
+              item.x - this.$width * 2,
+              item.x - this.$width,
+              item.x,
+              item.x + this.$width,
+              item.x + this.$width * 2,
+            ],
+          };
+        }
+        item.animationInputRanges = animationInputRanges;
+        item.makeAnimationInterpolates();
+      });
 
       // 시작 위치
-      const initScrollPos = (baseItemIndex + initItemIndex) * this.$width;
-      const contentOffset = this.makeContentOffset(initScrollPos);
+      const initScrollIndex = baseItemIndex + initItemIndex;
+      const initScrollPos = initScrollIndex * this.$width;
+      const contentOffset = this.__makeContentOffset(initScrollPos);
 
       this.setState(
         {
           items,
           baseItemIndex,
-          baseItemCount: baseItems.length,
+          baseItemCount,
           contentOffset,
+          animationInputRangeType,
+          realLoopCloneCount,
         },
         () => {
-          if (isIos) {
-            if (this.$lastScrollPos !== initScrollPos) {
-              setTimeout(() => {
-                this.scrollTo(baseItemIndex + initItemIndex, false);
-              }, 100);
-            } else {
-              this.nextTickUpdateUI();
-            }
+          if (this.$isScrolling) {
+            this.$scrollToIndexWhenEndScrolling = {
+              index: initScrollIndex,
+              animated: false,
+            };
           } else {
-            if (this.$lastScrollPos !== initScrollPos) {
-              setTimeout(() => {
-                this.scrollTo(baseItemIndex + initItemIndex, false);
-              }, 100);
+            if (isIos) {
+              this.$animation.value.setValue(initScrollPos);
             } else {
-              this.nextTickUpdateUI();
+              if (stateItems && stateItems.length !== items.length) {
+                this.$scrollToIndexWhenScrollContentSizeChange = initScrollIndex;
+              } else {
+                if (this.$lastScrollPos !== initScrollPos) {
+                  if (initScrollPos > this.$scrollContentSize) {
+                    this.$scrollToIndexWhenScrollContentSizeChange = initScrollIndex;
+                  } else {
+                    this.__scrollTo(initScrollIndex, false);
+                  }
+                }
+              }
             }
           }
+
           if (showPaginate && this.$paginateRef.current) {
             this.$paginateRef.current.setActiveIndex(initItemIndex);
           }
@@ -308,14 +461,8 @@ class Swiper extends React.Component {
     }
   }
 
-  nextTickUpdateUI() {
-    this.nextTick(() => {
-      this.updateUI();
-    });
-  }
-
-  updateUI() {
-    if (this.$disableUpdateUI) {
+  __updateUI() {
+    if (disableUpdateUI) {
       return;
     }
 
@@ -325,27 +472,20 @@ class Swiper extends React.Component {
     if (items == null) return;
 
     if (this.$lastScrollPos == null && baseItemIndex * this.$width !== 0) {
-      this.scrollTo(baseItemIndex, false);
+      this.__scrollTo(baseItemIndex, false);
     } else {
       if (this.$lastScrollPos == null) {
         this.$lastScrollPos = 0;
       }
 
-      // 아이템 transform 설정
-      items.forEach((item, index) => {
-        item.transform = this.getItemTransform(this.$lastScrollPos, index);
-        if (item.ref.current) {
-          item.ref.current.setTransform(item.transform);
-        }
-      });
-
       // 페이지 UI - Active Index 업데이트
       // onItemIndexChanging, onItemIndexChange 이벤트 발생
-      const itemIndex = this.getItemIndex(this.$lastScrollPos);
-      const isExactItemIndex = this.isExactItemIndex(itemIndex);
-      const nearItemIndex = Math.round(itemIndex);
+      const itemIndex = this.__getItemIndex(this.$lastScrollPos);
+      const isExactItemIndex = Number.isInteger(itemIndex);
 
       if (isExactItemIndex) {
+        this.__endScrolling();
+
         if (Util.isIndexIn(itemIndex, items.length)) {
           const baseItemIndex = items[itemIndex].baseIndex;
           if (baseItemIndex !== this.$lastActiveChangeBaseItemIndex) {
@@ -356,107 +496,86 @@ class Swiper extends React.Component {
             if (onItemIndexChanging) onItemIndexChanging(baseItemIndex);
             this.$lastActiveChangingBaseItemIndex = baseItemIndex;
           }
-        }
-      } else if (Util.isIndexIn(nearItemIndex, items.length)) {
-        const baseItemIndex = items[nearItemIndex].baseIndex;
-        if (baseItemIndex !== this.$lastActiveChangingBaseItemIndex) {
           if (showPaginate && this.$paginateRef.current) {
             this.$paginateRef.current.setActiveIndex(baseItemIndex);
           }
-          if (onItemIndexChanging) onItemIndexChanging(baseItemIndex);
+        }
+      } else {
+        const nearItemIndex = Math.round(itemIndex);
 
-          this.$lastActiveChangingBaseItemIndex = baseItemIndex;
+        if (Util.isIndexIn(nearItemIndex, items.length)) {
+          const baseItemIndex = items[nearItemIndex].baseIndex;
+          if (baseItemIndex !== this.$lastActiveChangingBaseItemIndex) {
+            if (showPaginate && this.$paginateRef.current) {
+              this.$paginateRef.current.setActiveIndex(baseItemIndex);
+            }
+            if (onItemIndexChanging) onItemIndexChanging(baseItemIndex);
+
+            this.$lastActiveChangingBaseItemIndex = baseItemIndex;
+          }
         }
       }
 
       // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer 시작
-      this.startScrollToBaseTimer();
+      if (isExactItemIndex) {
+        this.__startScrollToBaseTimer();
+      }
 
       // 자동 스크롤 Timer 시작
       if (isExactItemIndex && autoplay) {
-        this.startAutoplayTimer();
+        this.__startAutoplayTimer();
       }
     }
   }
 
-  //--------------------------------------------------------------------------------------------------------------------
+  // Scroll to Base Timer ----------------------------------------------------------------------------------------------
 
-  startScrollToBaseTimer = () => {
-    this.stopScrollToBaseTimer();
+  __startScrollToBaseTimer = () => {
+    if (disableMoveToBase) {
+      return;
+    }
 
-    if (!this.$scrollDragging) {
-      if (this.$scrollViewRef && this.canLoop()) {
+    this.__stopScrollToBaseTimer();
+
+    if (!this.$isScrolling) {
+      const {loop, loopSingleItem} = this.props;
+      const {items, baseItemCount, animationInputRangeType, realLoopCloneCount} = this.state;
+
+      if (this.$scrollViewRef && this.__canLoop(loop, loopSingleItem, baseItemCount)) {
         this.$scrollToBaseTimer = setTimeout(
           () => {
             this.$scrollToBaseTimer = null;
 
-            const {loopCloneCount, inactiveItemScale, inactiveItemOffset} = this.props;
-            const {items, baseItemCount} = this.state;
+            const itemIndex = this.__getItemIndex(this.$lastScrollPos);
 
-            const itemIndex = this.getItemIndex(this.$lastScrollPos);
-
-            if (this.isExactItemIndex(itemIndex)) {
+            if (Number.isInteger(itemIndex) && Util.isIndexIn(itemIndex, items.length)) {
               const item = items[itemIndex];
 
-              if (item && itemIndex !== loopCloneCount + item.baseIndex) {
-                const toActiveItemIndex = loopCloneCount + items[itemIndex].baseIndex;
-                const toActiveItem = items[toActiveItemIndex];
+              if (itemIndex !== realLoopCloneCount + item.baseIndex) {
+                let toActiveItemIndex;
 
-                // 활성 아이템의 transform 설정
-                toActiveItem.transform = this.getItemTransform(toActiveItem.x, toActiveItemIndex);
-                if (!isIos && toActiveItem.ref.current) {
-                  toActiveItem.ref.current.setTransform(toActiveItem.transform);
-                }
-
-                // 사이드 비활성 아이템의 transform 설정
-                [toActiveItemIndex - 1, toActiveItemIndex + 1].forEach((sideInactiveItemIndex) => {
-                  if (Util.isIndexIn(sideInactiveItemIndex, items.length)) {
-                    const sideInactiveItem = items[sideInactiveItemIndex];
-                    sideInactiveItem.transform = this.getItemTransform(toActiveItem.x, sideInactiveItemIndex);
-                    if (!isIos && sideInactiveItem.ref.current && itemIndex !== sideInactiveItemIndex) {
-                      sideInactiveItem.ref.current.setTransform(sideInactiveItem.transform);
-                    }
-                  }
-                });
-
-                if (!isIos && inactiveItemOffset !== 0) {
-                  // 안드로이드에서 사이드 비활성 아이템의 깜박임 방지
-                  // 원본 아이템이 3개 이상이면 깜박이지 않음
-                  // loopCloneCount 가 2 미만이면 깜박임
-
-                  if (baseItemCount <= 2) {
-                    let lr2Index, lr2TransformBaseIndex;
-                    if (toActiveItemIndex > itemIndex) {
-                      lr2Index = toActiveItemIndex + (baseItemCount + 1);
-                      lr2TransformBaseIndex = lr2Index - 1;
-                    } else {
-                      lr2Index = toActiveItemIndex - (baseItemCount + 1);
-                      lr2TransformBaseIndex = lr2Index + 1;
-                    }
-
-                    if (Util.isIndexIn(lr2Index, items.length)) {
-                      const lr2Item = items[lr2Index];
-                      if (lr2Item.ref.current) {
-                        lr2Item.transform = this.getItemTransform(items[lr2TransformBaseIndex].x, lr2Index);
-                        if (toActiveItemIndex > itemIndex) {
-                          lr2Item.transform.translateX -= (this.$width / inactiveItemScale) * (baseItemCount * 2);
-                        } else {
-                          lr2Item.transform.translateX += (this.$width / inactiveItemScale) * (baseItemCount * 2);
-                        }
-                        lr2Item.ref.current.setTransform(lr2Item.transform);
-                      }
-                    }
-                  }
-                }
-
-                if (isIos) {
-                  this.setState({
-                    contentOffset: this.makeContentOffset(toActiveItem.x),
-                  });
+                if (animationInputRangeType === Animation.InputRangeType.Item || baseItemCount > 2) {
+                  toActiveItemIndex = realLoopCloneCount + items[itemIndex].baseIndex;
                 } else {
-                  // this.$disableUpdateUI = true;
+                  if (Math.abs(item.distanceFromBase) > 2) {
+                    if (item.distanceFromBase > 0) {
+                      toActiveItemIndex = item.index - 4;
+                    } else {
+                      toActiveItemIndex = item.index + 4;
+                    }
+                  }
+                }
 
-                  this.nextTickScrollTo(toActiveItemIndex, false);
+                if (toActiveItemIndex != null) {
+                  const toActiveItem = items[toActiveItemIndex];
+
+                  if (isIos) {
+                    this.setState({
+                      contentOffset: this.__makeContentOffset(toActiveItem.x),
+                    });
+                  } else {
+                    this.__scrollTo(toActiveItem.index, false);
+                  }
                 }
               }
             }
@@ -468,105 +587,17 @@ class Swiper extends React.Component {
     }
   };
 
-  stopScrollToBaseTimer = () => {
+  __stopScrollToBaseTimer = () => {
     if (this.$scrollToBaseTimer) {
       clearTimeout(this.$scrollToBaseTimer);
       this.$scrollToBaseTimer = null;
     }
   };
 
-  //--------------------------------------------------------------------------------------------------------------------
+  // Autoplay Timer ----------------------------------------------------------------------------------------------------
 
-  getItemIndex(scrollPos) {
-    return Number((scrollPos / this.$width).toFixed(toFixedFractionDigits));
-  }
-
-  isExactItemIndex(itemIndex) {
-    return itemIndex === Math.floor(itemIndex);
-  }
-
-  getItemTransform(scrollPos, itemIndex) {
-    const {
-      itemScaleAlign,
-      activeItemScale,
-      activeItemOpacity,
-      inactiveItemScale,
-      inactiveItemOffset,
-      inactiveItemOpacity,
-    } = this.props;
-    const {items} = this.state;
-
-    if (!Util.isIndexIn(itemIndex, items.length)) return null;
-
-    const item = items[itemIndex];
-    const itemHeight = item.ref.current.getContentSize().height;
-
-    let delta = null;
-    let scale = activeItemScale;
-    let translateDelta = scrollPos;
-    let translateX = 0;
-    let translateY = 0;
-    let opacity = activeItemOpacity;
-
-    if (item.x < scrollPos) {
-      if (item.x >= scrollPos - this.$width * 1.5) {
-        delta = 1 - (scrollPos - item.x) / this.$width;
-      } else {
-        delta = 0;
-        translateDelta = item.x + this.$width;
-      }
-    } else if (item.x > scrollPos) {
-      if (item.x <= scrollPos + this.$width) {
-        delta = 1 - (item.x - scrollPos) / this.$width;
-      } else {
-        delta = 0;
-        translateDelta = item.x - this.$width;
-      }
-    }
-
-    if (delta != null) {
-      scale = inactiveItemScale + (activeItemScale - inactiveItemScale) * delta;
-      opacity = inactiveItemOpacity + (activeItemOpacity - inactiveItemOpacity) * delta;
-
-      const scaledItemWidth = this.$realItemWidth * scale;
-      translateX =
-        (((this.$width - scaledItemWidth) / 2 / scale + inactiveItemOffset / inactiveItemScale) *
-          (translateDelta - item.x)) /
-        this.$width;
-    }
-
-    if (itemHeight > 0) {
-      switch (itemScaleAlign) {
-        case 'top':
-          translateY = -(itemHeight - itemHeight * scale) / 2 / scale;
-          break;
-        case 'bottom':
-          translateY = (itemHeight - itemHeight * scale) / 2 / scale;
-          break;
-      }
-    }
-
-    const zIndex = itemIndex === Math.round(scrollPos / this.$width) ? 2 : 1;
-
-    return {scale, translateX, translateY, zIndex, opacity};
-  }
-
-  getRealItemWidth(width, itemWidth) {
-    let finalItemWidth = itemWidth || width;
-    if (typeof itemWidth === 'string') {
-      if (itemWidth.includes('%')) {
-        finalItemWidth = width * (Number(itemWidth.replace(/%/g, '')) / 100);
-      } else {
-        finalItemWidth = Number(itemWidth);
-      }
-    }
-    return finalItemWidth;
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-
-  startAutoplayTimer() {
-    this.stopAutoplayTimer();
+  __startAutoplayTimer() {
+    this.__stopAutoplayTimer();
 
     const {autoplayDelay, autoplayInterval} = this.props;
 
@@ -575,12 +606,12 @@ class Swiper extends React.Component {
         this.$autoplayTimer = null;
         this.$autoplayDelayed = true;
 
-        const itemIndex = this.getItemIndex(this.$lastScrollPos);
-        if (this.isExactItemIndex(itemIndex)) {
+        const itemIndex = this.__getItemIndex(this.$lastScrollPos);
+        if (Number.isInteger(itemIndex)) {
           const {items} = this.state;
           if (items) {
             const toIndex = (itemIndex + 1) % items.length;
-            this.scrollTo(toIndex);
+            this.__scrollTo(toIndex);
           }
         }
       },
@@ -588,41 +619,184 @@ class Swiper extends React.Component {
     );
   }
 
-  stopAutoplayTimer() {
+  __stopAutoplayTimer() {
     if (this.$autoplayTimer) {
       clearTimeout(this.$autoplayTimer);
       this.$autoplayTimer = null;
     }
   }
 
+  // Scrolling ---------------------------------------------------------------------------------------------------------
+
+  __beginScrolling() {
+    this.$isScrolling = true;
+
+    this.__stopAutoplayTimer();
+    this.__stopScrollToBaseTimer();
+  }
+
+  __endScrolling() {
+    this.$isScrolling = false;
+    this.$lastAnimatedScrollToIndex = null;
+
+    if (this.$scrollToIndexWhenEndScrolling != null) {
+      this.__scrollTo(this.$scrollToIndexWhenEndScrolling.index, this.$scrollToIndexWhenEndScrolling.animated);
+      this.$scrollToIndexWhenEndScrolling = null;
+    }
+  }
+
   //--------------------------------------------------------------------------------------------------------------------
 
-  canLoop() {
-    const {loop, loopSingleItem} = this.props;
-    const {items} = this.state;
-    return loop && items && items.length > 0 && (loopSingleItem || items.length > 1);
+  __setWidth(width) {
+    if (width !== this.$width) {
+      this.$width = width;
+      this.$animation.setOutputRanges(Animation.Key.ZIndex, [1, 1, width, 1, 1]);
+      this.__resetItemWidthAndTranslateX(this.props, this.state, false);
+      this.__makeItems(this.props);
+    }
   }
 
-  nextTickScrollTo(index, animated) {
-    this.nextTick(() => {
-      this.scrollTo(index, animated);
-    });
+  __getAnimationInputRangeType(props) {
+    const {
+      items,
+      loop,
+      loopSingleItem,
+      activeItemScale,
+      activeItemOpacity,
+      inactiveItemScale,
+      inactiveItemOpacity,
+      inactiveItemOffset,
+    } = props;
+
+    return isIos ||
+      (items.length === 1 && !this.__canLoop(loop, loopSingleItem, items.length)) ||
+      (activeItemScale === 1 &&
+        activeItemOpacity === 1 &&
+        inactiveItemScale === 1 &&
+        inactiveItemOpacity === 1 &&
+        inactiveItemOffset === 0)
+      ? Animation.InputRangeType.Item
+      : Animation.InputRangeType.Items;
   }
 
-  scrollTo(index, animated = true) {
-    if (this.$scrollViewRef) {
-      const x = index * this.$width;
-      if (x <= this.$scrollContentSize) {
-        this.$scrollViewRef.scrollTo({
-          x: index * this.$width,
-          y: 0,
-          animated,
+  __getRealLoopCloneCount(loopCloneCount, animationInputRangeType, itemsCount) {
+    let minLoopCloneCount = 1;
+    let realLoopCloneCount;
+    if (animationInputRangeType === Animation.InputRangeType.Item) {
+      realLoopCloneCount = Math.max(minLoopCloneCount, loopCloneCount);
+    } else {
+      if (itemsCount < 3) {
+        realLoopCloneCount = 6;
+      } else {
+        realLoopCloneCount = Math.max(minLoopCloneCount, loopCloneCount);
+      }
+    }
+    return realLoopCloneCount;
+  }
+
+  __getItemIndex(scrollPos, round = false) {
+    const itemIndex = Number((scrollPos / this.$width).toFixed(toFixedFractionDigits));
+    if (round) {
+      return Math.round(itemIndex);
+    } else {
+      return itemIndex;
+    }
+  }
+
+  __resetItemWidthAndTranslateX(props, state, updateItems = true) {
+    if (this.$width) {
+      const {itemWidth, inactiveItemScale, inactiveItemOffset} = props;
+
+      this.$realItemWidth = itemWidth || this.$width;
+      if (typeof itemWidth === 'string') {
+        if (itemWidth.includes('%')) {
+          this.$realItemWidth = this.$width * (Number(itemWidth.replace(/%/g, '')) / 100);
+        } else {
+          this.$realItemWidth = Number(itemWidth);
+        }
+      }
+
+      if (inactiveItemScale === 1 && inactiveItemOffset === 0) {
+        this.$animation.setOutputRanges(Animation.Key.TranslateX, null);
+        this.$animation.setOutputRanges(Animation.Key.TranslateXContainer, null);
+      } else {
+        const inactiveItemWidth = this.$realItemWidth * inactiveItemScale;
+        const translateX = (this.$width - inactiveItemWidth) / 2 / inactiveItemScale;
+
+        this.$animation.setOutputRanges(Animation.Key.TranslateX, [
+          -translateX * 2,
+          -translateX,
+          0,
+          translateX,
+          translateX * 2,
+        ]);
+        this.$animation.setOutputRanges(Animation.Key.TranslateXContainer, [
+          -inactiveItemOffset * 2,
+          -inactiveItemOffset,
+          0,
+          inactiveItemOffset,
+          inactiveItemOffset * 2,
+        ]);
+      }
+
+      if (updateItems && state.items) {
+        state.items.forEach((item) => {
+          item.makeAnimationInterpolate([Animation.Key.TranslateX, Animation.Key.TranslateXContainer]);
         });
       }
     }
   }
 
-  makeContentOffset(x) {
+  __resetAnimationOpacity(props, state, updateItems = true) {
+    if (props.activeItemOpacity === 1 && props.inactiveItemOpacity === 1) {
+      this.$animation.setOutputRanges(Animation.Key.Opacity, null);
+    } else {
+      this.$animation.setOutputRanges(Animation.Key.Opacity, [
+        props.inactiveItemOpacity,
+        props.inactiveItemOpacity,
+        props.activeItemOpacity,
+        props.inactiveItemOpacity,
+        props.inactiveItemOpacity,
+      ]);
+    }
+
+    if (updateItems && state.items) {
+      state.items.forEach((item) => {
+        item.makeAnimationInterpolate(Animation.Key.Opacity);
+      });
+    }
+  }
+
+  __resetAnimationScale(props, state, updateItems = true) {
+    const {activeItemScale, inactiveItemScale} = props;
+    if (activeItemScale === 1 && inactiveItemScale === 1) {
+      this.$animation.setOutputRanges(Animation.Key.Scale, null);
+      this.$animation.setOutputRanges(Animation.Key.InnerScale, null);
+    } else {
+      this.$animation.setOutputRanges(Animation.Key.Scale, [
+        activeItemScale * inactiveItemScale,
+        inactiveItemScale,
+        activeItemScale * inactiveItemScale,
+        inactiveItemScale,
+        activeItemScale * inactiveItemScale,
+      ]);
+      this.$animation.setOutputRanges(Animation.Key.InnerScale, [
+        activeItemScale / inactiveItemScale,
+        1,
+        activeItemScale / inactiveItemScale,
+        1,
+        activeItemScale / inactiveItemScale,
+      ]);
+    }
+
+    if (updateItems && state.items) {
+      state.items.forEach((item) => {
+        item.makeAnimationInterpolate([Animation.Key.Scale, Animation.Key.InnerScale]);
+      });
+    }
+  }
+
+  __makeContentOffset(x) {
     const {contentOffset} = this.state;
     if (contentOffset.x === x) {
       // 기존 값과 같으면 UI가 onScroll 이벤트가 발생하지 않기 때문에 처리
@@ -632,106 +806,92 @@ class Swiper extends React.Component {
     }
   }
 
-  nextTick(cb) {
-    setImmediate(cb);
+  __canLoop(loop, loopSingleItem, baseItemsCount) {
+    return loop && baseItemsCount > 0 && (loopSingleItem || baseItemsCount > 1);
   }
 
-  //--------------------------------------------------------------------------------------------------------------------
-
-  activeItem(index, animated = true) {
-    const {baseItemCount, baseItemIndex} = this.state;
-    if (Util.isIndexIn(index, baseItemCount)) {
-      this.scrollTo(baseItemIndex + index, animated);
-    }
-  }
-
-  activeNextItem(animated = true) {
-    const itemIndex = Math.round(this.getItemIndex(this.$lastScrollPos)) + 1;
-    const {items} = this.state;
-    if (Util.isIndexIn(itemIndex, items.length)) {
-      this.scrollTo(itemIndex, animated);
-    }
-  }
-
-  activePrevItem(animated = true) {
-    const itemIndex = Math.round(this.getItemIndex(this.$lastScrollPos)) - 1;
-    const {items} = this.state;
-    if (Util.isIndexIn(itemIndex, items.length)) {
-      this.scrollTo(itemIndex, animated);
-    }
-  }
-
-  getActiveItemIndex() {
-    const itemIndex = Math.round(this.getItemIndex(this.$lastScrollPos)) - 1;
-    const {items} = this.state;
-    if (Util.isIndexIn(itemIndex, items.length)) {
-      return items[itemIndex].baseIndex;
-    } else {
-      return items[items.length - 1].baseIndex;
-    }
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-
-  handleContainerLayout = (e) => {
-    if (e.nativeEvent && e.nativeEvent.layout) {
-      const width = e.nativeEvent.layout.width;
-
-      if (width !== this.$width) {
-        const {itemWidth} = this.props;
-        this.$width = width;
-        this.$realItemWidth = this.getRealItemWidth(width, itemWidth);
-
-        this.makeItems(this.props);
+  __scrollTo(index, animated = true) {
+    if (this.$scrollViewRef) {
+      const x = index * this.$width;
+      if (x <= this.$scrollContentSize) {
+        if (this.$lastScrollPos !== x) {
+          this.$lastAnimatedScrollToIndex = index;
+          if (!isIos && this.$isScrolling) {
+            this.$scrollToIndexWhenEndScrolling = {
+              index,
+              animated,
+            };
+          } else {
+            if (animated) {
+              this.__beginScrolling();
+            } else {
+              this.__stopAutoplayTimer();
+              this.__stopScrollToBaseTimer();
+            }
+            this.$scrollViewRef.scrollTo({x, y: 0, animated});
+          }
+        }
       }
+    }
+  }
+
+  // Handler -----------------------------------------------------------------------------------------------------------
+
+  __handleContainerLayout = (e) => {
+    const width = e.nativeEvent.layout.width;
+
+    if (width !== this.$width) {
+      this.__setWidth(width);
     }
 
     const {onLayout} = this.props;
     if (onLayout) onLayout(e);
   };
 
-  handleScrollViewLayout = () => {
-    this.updateUI();
+  __handleScrollViewLayout = (e) => {
+    this.__updateUI();
   };
 
-  handleScroll = ({nativeEvent}) => {
-    if (nativeEvent) {
-      const x = nativeEvent.contentOffset.x;
-      if (this.$lastScrollPos !== x) {
-        this.$lastScrollPos = x;
+  _handleScroll = (e) => {
+    const x = e.nativeEvent.contentOffset.x;
 
-        this.updateUI();
+    if (this.$lastScrollPos !== x) {
+      this.$lastScrollPos = x;
+
+      this.__updateUI();
+    }
+  };
+
+  __handleTouchStart = () => {
+    this.__beginScrolling();
+  };
+
+  __handleTouchDragEnd = () => {
+    if (Number.isInteger(this.__getItemIndex(this.$lastScrollPos))) {
+      this.__updateUI();
+    }
+  };
+
+  __handleContentSizeChange = (contentSize) => {
+    this.$scrollContentSize = contentSize;
+    if (this.$scrollToIndexWhenScrollContentSizeChange != null) {
+      if (this.$scrollToIndexWhenScrollContentSizeChange * this.$width <= this.$scrollContentSize) {
+        this.__scrollTo(this.$scrollToIndexWhenScrollContentSizeChange, false);
       }
     }
   };
 
-  handleScrollBeginDrag = () => {
-    this.$scrollDragging = true;
-    this.stopAutoplayTimer();
-    this.stopScrollToBaseTimer();
-  };
-
-  handleScrollEndDrag = () => {
-    this.$scrollDragging = false;
-
-    if (this.isExactItemIndex(this.getItemIndex(this.$lastScrollPos))) {
-      this.updateUI();
-    }
-  };
-
-  handleContentSizeChange = (contentSize) => {
-    this.$scrollContentSize = contentSize;
-    this.updateUI();
-  };
-
-  //--------------------------------------------------------------------------------------------------------------------
+  // Render ------------------------------------------------------------------------------------------------------------
 
   render() {
     const {
       style,
-      itemAlign,
       items: propsItems,
       onItemRender,
+      activeItemScale,
+      inactiveItemScale,
+      itemAlign,
+      itemScaleAlign,
       showPaginate,
       paginateStyle,
       paginateDotStyle,
@@ -742,51 +902,47 @@ class Swiper extends React.Component {
 
     const renderItems = propsItems.map((item, index) => onItemRender && onItemRender(item, index));
 
-    let itemJustifyContent;
-    switch (itemAlign) {
-      case 'middle':
-        itemJustifyContent = 'center';
-        break;
-      case 'bottom':
-        itemJustifyContent = 'flex-end';
-        break;
-      default:
-        itemJustifyContent = 'flex-start';
-        break;
-    }
-
     return (
-      <View style={[styles.container, style]} onLayout={this.handleContainerLayout}>
+      <View style={[styles.container, style]} onLayout={this.__handleContainerLayout}>
         {items && (
           <>
-            <ScrollView
+            <Animated.ScrollView
               ref={(ref) => (this.$scrollViewRef = ref)}
-              style={styles.scrollView}
+              style={[styles.scrollView]}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={16}
+              scrollEventThrottle={8}
               decelerationRate="fast"
               pagingEnabled
               contentOffset={contentOffset}
-              onLayout={this.handleScrollViewLayout}
-              onScroll={this.handleScroll}
-              onScrollBeginDrag={this.handleScrollBeginDrag}
-              onScrollEndDrag={this.handleScrollEndDrag}
-              onContentSizeChange={this.handleContentSizeChange}>
-              {items.map((item, index) => (
-                <SwiperItem
-                  ref={item.ref}
-                  key={index}
-                  style={{
-                    width: this.$width,
-                    justifyContent: itemJustifyContent,
-                  }}
-                  transform={item.transform}>
-                  <View style={{width: this.$realItemWidth || this.$width}}>{renderItems[item.baseIndex]}</View>
-                  {showIndexText && <Text style={styles.indexText}>{index}</Text>}
-                </SwiperItem>
-              ))}
-            </ScrollView>
+              onLayout={this.__handleScrollViewLayout}
+              onScroll={Animated.event([{nativeEvent: {contentOffset: {x: this.$animation.value}}}], {
+                useNativeDriver: true,
+                listener: this._handleScroll,
+              })}
+              onTouchStart={this.__handleTouchStart}
+              onTouchEnd={this.__handleTouchDragEnd}
+              onScrollEndDrag={this.__handleTouchDragEnd}
+              onContentSizeChange={this.__handleContentSizeChange}>
+              {items.map((item, index) => {
+                return (
+                  <SwiperItem
+                    key={index}
+                    updateKey={item.updateKey}
+                    width={this.$width}
+                    realItemWidth={this.$realItemWidth}
+                    item={item}
+                    itemAlign={itemAlign}
+                    activeItemScale={activeItemScale}
+                    inactiveItemScale={inactiveItemScale}
+                    itemScaleAlign={itemScaleAlign}
+                    showDebugIndex={showDebugIndex}>
+                    {renderItems[item.baseIndex]}
+                  </SwiperItem>
+                );
+              })}
+            </Animated.ScrollView>
+
             {showPaginate && (
               <SwiperPaginate
                 ref={this.$paginateRef}
@@ -809,11 +965,18 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   scrollView: {},
-  indexText: {
+  indexWrap: {
     position: 'absolute',
+    top: 0,
+    width: 20,
+    left: '50%',
+    marginLeft: -10,
+    zIndex: Dimensions.get('window').width + 1,
+  },
+  indexText: {
     backgroundColor: 'black',
     color: 'white',
-    paddingHorizontal: 3,
+    textAlign: 'center',
   },
 });
 

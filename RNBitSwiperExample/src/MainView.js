@@ -23,10 +23,14 @@ const MainView = () => {
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  const [items, setItems] = useState([newItem('Item 1', getRandomColor())]);
+  const [items, setItems] = useState([
+    newItem('Item 1', getRandomColor()),
+    newItem('Item 2', getRandomColor()),
+    newItem('Item 3', getRandomColor()),
+  ]);
   const [itemWidth, setItemWidth] = useState();
-  const [itemAlign, setItemAlign] = useState();
-  const [itemScaleAlign, setItemScaleAlign] = useState();
+  const [itemAlign, setItemAlign] = useState('top');
+  const [itemScaleAlign, setItemScaleAlign] = useState('middle');
   const [activeItemScale, setActiveItemScale] = useState();
   const [activeItemOpacity, setActiveItemOpacity] = useState();
   const [inactiveItemScale, setInactiveItemScale] = useState();
@@ -55,9 +59,9 @@ const MainView = () => {
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  const handleItemRender = ({label, backgroundColor}) => {
+  const handleItemRender = ({label, backgroundColor}, index) => {
     return (
-      <View style={[styles.swiperItem, {backgroundColor}]}>
+      <View key={index} style={[styles.swiperItem, {backgroundColor}]}>
         <View style={styles.swiperItemInner}>
           <Text style={styles.swiperItemText}>{label}</Text>
         </View>
@@ -72,6 +76,7 @@ const MainView = () => {
   const handlePaginateDotRender = (index, active) => {
     return (
       <TouchableOpacity
+        key={index}
         activeOpacity={0.7}
         style={active ? styles.customActiveDot : styles.customDot}
         onPress={() => {
@@ -116,11 +121,17 @@ const MainView = () => {
 
       {/* buttons */}
       <View style={styles.buttons}>
+        <Button style={styles.smallButton} textColor="white" onPress={() => swiperRef.current.activePrevItem()}>
+          &lt;
+        </Button>
         <Button style={styles.button} onPress={() => addItem()}>
           + Add Item
         </Button>
         <Button style={styles.button} onPress={() => removeItem()}>
           - Remove Item
+        </Button>
+        <Button style={styles.smallButton} textColor="white" onPress={() => swiperRef.current.activeNextItem()}>
+          &gt;
         </Button>
       </View>
 
@@ -208,6 +219,8 @@ const styles = StyleSheet.create({
     marginHorizontal: -5,
   },
   button: {flex: 1, marginHorizontal: 5},
+  smallButton: {marginHorizontal: 5, width: 40, backgroundColor: '#20a8d8'},
+  smallButtonText: {color: 'white'},
 
   // info
   infoWrap: {

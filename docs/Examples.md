@@ -30,7 +30,7 @@
 <BitSwiper
   items={['Item 1', 'Item 2', 'Item 3']}
   onItemRender={(item, index) => (
-    <View style={{height: 200}}>
+    <View key={index} style={{height: 200}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -75,7 +75,7 @@
   inactiveItemOpacity={0.5} // 비활성 아이템의 투명도
   inactiveItemOffset={30} // 비활성 아이템 표시 넓이
   onItemRender={(item, index) => (
-    <View style={{height: 150}}>
+    <View key={index} style={{height: 150}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -106,7 +106,17 @@
 [`loopCloneCount`](ApiReference.md#loopclonecount)
 값으로 기본 아이템 목록 양 옆에 몇개의 아이템을 복사할지 설정할 수 있습니다.
 값을 `4` 로 설정하면, 왼쪽에 4개, 오른쪽에 4개를 복사합니다. 
-안드로이드에서 깜박임을 방지하라면, 최소 `2` 이상의 값을 사용해야합니다. 기본값은 `4` 입니다.  
+
+루프 사용 시 깜박임을 방지하기 위해,
+[`loopCloneCount`](ApiReference.md#loopclonecount)
+의 최소값이 플렛폼 별로 다음과 같이 자동 설정됩니다.
+
+| 플렛폼    | 아이템 수 | 최소값  |
+| :---:   | :---:   | :---: |
+| iOS     | 모두     | 1     |
+| Android | 1개     | 3     |
+| Android | 2개     | 4     |
+| Android | 3개 이상  | 1     | 
 
 <img src="https://github.com/parkdigy/react-native-bit-swiper/raw/master/docs/img/example_loop.gif" width="300" height="130" /><br/>
 
@@ -120,7 +130,7 @@
   loop // 루프 사용
   loopSingleItem // 아이템이 1개 일때 루프 사용
   onItemRender={(item, index) => (
-    <View style={{height: 150}}>
+    <View key={index} style={{height: 150}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -163,7 +173,7 @@ _루프를 적용한 자동 스크롤_<br/>
   autoplayDelay={1000} // 자동 스크롤 최초 대기 시간 (1초)
   autoplayInterval={1000} // 자동 스크롤 시간 간격 (1초)
   onItemRender={(item, index) => (
-    <View style={{height: 150}}>
+    <View key={index} style={{height: 150}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -224,7 +234,7 @@ _루프를 적용한 자동 스크롤_<br/>
     marginHorizontal: 3,
   }}
   onItemRender={(item, index) => (
-    <View style={{height: 150}}>
+    <View key={index} style={{height: 150}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -262,7 +272,7 @@ _루프를 적용한 자동 스크롤_<br/>
   inactiveItemOffset={30}
   loop
   onItemRender={(item, index) => (
-    <View style={{height: 150}}>
+    <View key={index} style={{height: 150}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -272,6 +282,7 @@ _루프를 적용한 자동 스크롤_<br/>
   // 커스텀 페이지 render
   onPaginateDotRender={(index, active) => (
     <TouchableOpacity
+      key={index}
       activeOpacity={0.7}
       style={active ? styles.customActiveDot : styles.customDot}
       onPress={() => {
@@ -344,7 +355,7 @@ _하단 정렬 (bottom)_<br/>
   inactiveItemOffset={30}
   loop
   onItemRender={(item, index) => (
-    <View style={{height: [150, 180, 200][index]}}>
+    <View key={index} style={{height: [150, 180, 200][index]}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -384,7 +395,7 @@ _하단 정렬 (bottom)_<br/>
   inactiveItemOffset={30}
   loop
   onItemRender={(item, index) => (
-    <View style={{height: 150}}>
+    <View key={index} style={{height: 150}}>
       <Image
         source={Images[index]}
         style={{width: '100%', height: '100%'}}
@@ -427,4 +438,5 @@ $ react-native run-android
 
 ## 📖 다른 문서
 
-- [API 명세서 (API Reference)](./ApiReference.md) : 사용 가능한 Props, Event, Method 에 대한 상세 정보를 제공합니다.
+- [API 명세서 (API Reference)](ApiReference.md) : 사용 가능한 Props, Event, Method 에 대한 상세 정보를 제공합니다.
+- [업데이트 (Update)](Update.md) : 업데이트의 상세 정보를 제공합니다.

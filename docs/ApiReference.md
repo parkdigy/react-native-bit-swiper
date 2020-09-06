@@ -45,6 +45,8 @@
 - [`activeItem(index, animated)`](#activeitemindex-animated)
 - [`activeNextItem(animated)`](#activenextitemanimated)
 - [`activePrevItem(animated)`](#activeprevitemanimated)
+- [`activeFirstItem(animated)`](#activefirstitemanimated)
+- [`activeLastItem(animated)`](#activelastitemanimated)
 - [`getActiveItemIndex()`](#getactiveitemindex)
 
 ## Props - 아이템 관련
@@ -190,11 +192,17 @@
 
 기본 아이템 목록 양 옆에 몇개의 아이템을 복사할지 설정할 수 있습니다.
 값을 `4` 로 설정하면, 왼쪽에 4개, 오른쪽에 4개를 복사합니다. 
-안드로이드에서 깜박임을 방지하라면, 최소 `2` 이상의 값을 사용해야합니다.
 
 | 타입    | 기본값 |
 | :----: | :---: |
 | number | 4    |
+
+루프 사용 시 깜박임을 방지하기 위해, 플렛폼 별 상황에 따라 다음과 같이 최소값이 자동 설정됩니다.
+
+| 플렛폼    | 최소값  |
+| :---:   | :---: |
+| iOS     | 1     |
+| Android | 1 ~ 6 |
 
 > 관련 예제 : [루프 (Loop)](Examples.md#루프-loop)
 
@@ -386,9 +394,28 @@ View 컴포넌트의 onLayout 이벤트를 상속합니다.
 | :------: | :-----: | :---: | :---: | --------------------- |
 | animated | boolean | N     | true  | 스크롤 애니메이션 적용 여부  |
 
+### `activeFirstItem(animated)`[⬆](#methods-목차)
+첫번째 아이템을 활성화 시킵니다.
+
+***Parameters***
+
+| 이름      | 타입     | 필수    | 기본값  | 비고                    |
+| :------: | :-----: | :---: | :---: | --------------------- |
+| animated | boolean | N     | true  | 스크롤 애니메이션 적용 여부  |
+
+### `activeLastItem(animated)`[⬆](#methods-목차)
+마지막 아이템을 활성화 시킵니다.
+
+***Parameters***
+
+| 이름      | 타입     | 필수    | 기본값  | 비고                    |
+| :------: | :-----: | :---: | :---: | --------------------- |
+| animated | boolean | N     | true  | 스크롤 애니메이션 적용 여부  |
+
 ### `getActiveItemIndex()`[⬆](#methods-목차)
 현재 활성된 아이템의 `index` 반환합니다.
 
 ## 📖 다른 문서
 
-- [예제 (Examples)](./Examples.md) : 다양한 예제 및 코드를 제공합니다.
+- [예제 (Examples)](Examples.md) : 다양한 예제 및 코드를 제공합니다.
+- [업데이트 (Update)](Update.md) : 업데이트의 상세 정보를 제공합니다.

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {StyleSheet, ViewPropTypes, View, Text} from 'react-native';
+import {StyleSheet, ViewPropTypes, View} from 'react-native';
 import SwiperPaginateDot from './SwiperPaginateDot';
 
 class SwiperPaginate extends React.Component {

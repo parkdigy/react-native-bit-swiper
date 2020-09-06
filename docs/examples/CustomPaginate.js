@@ -2,11 +2,7 @@ import React, {useRef} from 'react';
 import {View, Image, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import BitSwiper from 'react-native-bit-swiper';
 
-const Images = [
-  require(`./img/item_1.jpg`),
-  require(`./img/item_2.jpg`),
-  require(`./img/item_3.jpg`),
-];
+const Images = [require(`./img/item_1.jpg`), require(`./img/item_2.jpg`), require(`./img/item_3.jpg`)];
 
 const CustomPaginateExample = () => {
   const swiperRef = useRef();
@@ -21,16 +17,14 @@ const CustomPaginateExample = () => {
       inactiveItemOffset={30}
       loop
       onItemRender={(item, index) => (
-        <View style={{height: 150}}>
-          <Image
-            source={Images[index]}
-            style={{width: '100%', height: '100%'}}
-          />
+        <View key={index} style={{height: 150}}>
+          <Image source={Images[index]} style={{width: '100%', height: '100%'}} />
         </View>
       )}
       // 커스텀 페이지 render
       onPaginateDotRender={(index, active) => (
         <TouchableOpacity
+          key={index}
           activeOpacity={0.7}
           style={active ? styles.customActiveDot : styles.customDot}
           onPress={() => {
@@ -38,10 +32,7 @@ const CustomPaginateExample = () => {
               swiperRef.current.activeItem(index);
             }
           }}>
-          <Text
-            style={active ? styles.customActiveDotText : styles.customDotText}>
-            {index + 1}
-          </Text>
+          <Text style={active ? styles.customActiveDotText : styles.customDotText}>{index + 1}</Text>
         </TouchableOpacity>
       )}
     />

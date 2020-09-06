@@ -8,3 +8,7 @@ export function isPropsChanged(props, prevProps, keys) {
 export function isIndexIn(index, length) {
   return index >= 0 && index < length;
 }
+
+export function nextTick(func) {
+  setImmediate(func);
+}
