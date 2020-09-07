@@ -19,8 +19,8 @@
     - Android 최소값 : 상황에 따라 1~6까지 자동을 설정 (자세한 정보는 [API 문서](ApiReference.md#loopclonecount) 참조)
 - [`activePrevItem()`](ApiReference.md#activeprevitemanimated)
 [`activeNextItem()`](ApiReference.md#activenextitemanimated) 빠르게 호출 시 이전/다음 아이템으로 이동하지 않고 무시되는 현상이 수정되었습니다. 
-- [`activeFirstItem(animated)`](ApiReference.md##activefirstitemanimated)
-[`activeLastItem(animated)`](ApiReference.md##activelastitemanimated) Method 가 추가되었습니다.
+- [`activeFirstItem(animated)`](ApiReference.md#activefirstitemanimated)
+[`activeLastItem(animated)`](ApiReference.md#activelastitemanimated) Method 가 추가되었습니다.
 
 ### `v1.0.2`[⬆](#목차)
 비활성 아이템 표시 넓이가 다르게 표시되는 현상 수정

@@ -201,11 +201,22 @@
 ### `autoplay`[⬆](#props-목차)
 자동 스크롤 여부
 
+iOS에서 Swiper 컴포넌트를
+[`ScrollView`](https://reactnative.dev/docs/scrollview)
+[`FlatList`](https://reactnative.dev/docs/flatlist)
+[`SectionList`](https://reactnative.dev/docs/sectionlist) 내에서 사용 시,
+자동 스크롤 애니메이션 진행중에
+[`ScrollView`](https://reactnative.dev/docs/scrollview)
+내부에 있는 다른 컴포넌트의 터치 이벤트가 발생되지 않는 문제가 있습니다.
+
+이를 해결하려면, [`다른 ScrollView 내에서 사용`](Examples.md#다른-scrollview-내에서-사용) 예제를 참고해주시기 바랍니다. 
+
 | 타입     | 기본값  |
 | :---:  | :---: |
 | boolean | false |
 
-> 관련 예제 : [자동 스크롤 (Autoplay)](Examples.md#자동-스크롤-autoplay)
+> 관련 예제 1 : [자동 스크롤 (Autoplay)](Examples.md#자동-스크롤-autoplay)<br/>
+> 관련 예제 2 : [다른 ScrollView 내에서 사용](Examples.md#다른-scrollview-내에서-사용)
 
 ### `autoplayDelay`[⬆](#props-목차)
 자동 스크롤 최초 대기 시간

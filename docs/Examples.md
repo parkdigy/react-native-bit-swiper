@@ -12,6 +12,7 @@
 - [`커스텀 페이지`](#커스텀-페이지)
 - [`아이템 정렬`](#아이템-정렬)
 - [`아이템 스케일 정렬`](#아이템-스케일-정렬)
+- [`다른 ScrollView 내에서 사용`](#다른-scrollview-내에서-사용)
 - [`예제 프로그램`](#예제-프로그램)
 
 ## `기본`[⬆](#목차)
@@ -411,6 +412,55 @@ _하단 정렬 (bottom)_<br/>
 > [`inactiveItemScale`](ApiReference.md#inactiveitemscale)
 
 > 전체 소스 : [/docs/examples/ItemScaleAlign.js](examples/ItemScaleAlign.js)
+
+## `다른 ScrollView 내에서 사용`[⬆](#목차)
+iOS에서 Swiper 컴포넌트를
+[`ScrollView`](https://reactnative.dev/docs/scrollview)
+[`FlatList`](https://reactnative.dev/docs/flatlist)
+[`SectionList`](https://reactnative.dev/docs/sectionlist) 내에서 사용 시,
+자동 스크롤 애니메이션 진행중에
+[`ScrollView`](https://reactnative.dev/docs/scrollview)
+내부에 있는 다른 컴포넌트의 터치 이벤트가 발생되지 않는 문제가 있습니다.
+
+`ScrollView`의
+[`disableScrollViewPanResponder`](https://reactnative.dev/docs/scrollview#disablescrollviewpanresponder)
+설정으로 문제를 해결할 수 있습니다.
+
+```javascript
+const [disableScrollViewPanResponder, setDisableScrollViewPanResponder] = useState(true);
+
+const handleScrollBeginDrag = () => {
+setDisableScrollViewPanResponder(false);
+};
+
+const handleScrollEndDrag = () => {
+setDisableScrollViewPanResponder(true);
+};
+
+<ScrollView
+  disableScrollViewPanResponder={isIos && disableScrollViewPanResponder}
+  onScrollBeginDrag={isIos && handleScrollBeginDrag}
+  onScrollEndDrag={isIos && handleScrollEndDrag}>
+  <BitSwiper
+    items={['Item 1', 'Item 2', 'Item 3']}
+    itemWidth="80%"
+    inactiveItemScale={0.8}
+    inactiveItemOpacity={0.5}
+    inactiveItemOffset={30}
+    loop
+    autoplay
+    autoplayInterval={1000}
+    onItemRender={(item, index) => (
+      <View key={index} style={{height: 150}}>
+        <Image source={Images[index]} style={{width: '100%', height: '100%'}} />
+      </View>
+    )}
+  />
+  <Button title="Button" onPress={() => console.log('Button press!')} />
+</ScrollView>
+```
+
+> 전체 소스 : [/docs/examples/SwiperInScrollView.js](examples/SwiperInScrollView.js)
 
 ## `예제 프로그램`[⬆](#목차)
 iOS, Android 예제프로그램을 통해, 이 컴포넌트에서 제공하는 다양한 기능을 실시간으로 옵션을 변경하며 확인할 수 있습니다.
