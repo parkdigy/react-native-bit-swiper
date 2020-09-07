@@ -122,10 +122,10 @@ class Swiper extends React.Component {
 
   shouldComponentUpdate(nextProps, nextState, nextContext) {
     if (this.props !== nextProps) {
-      this.__init(nextProps, this.props, nextState);
+      return this.__init(nextProps, this.props, nextState);
+    } else {
+      return true;
     }
-
-    return this.state !== nextState;
   }
 
   // public ------------------------------------------------------------------------------------------------------------
@@ -185,7 +185,6 @@ class Swiper extends React.Component {
 
   __init(props, prevProps, state) {
     let makeItems = false;
-    let forceUpdate = false;
 
     const animationInputRangeType = this.__getAnimationInputRangeType(props);
     if (state.animationInputRangeType !== animationInputRangeType) {
@@ -216,44 +215,21 @@ class Swiper extends React.Component {
       makeItems = true;
     }
 
-    if (!makeItems && prevProps != null && Util.isPropsChanged(props, prevProps, ['itemAlign'])) {
-      forceUpdate = true;
-    }
-
     if (
       prevProps == null ||
       Util.isPropsChanged(props, prevProps, ['itemWidth', 'inactiveItemScale', 'inactiveItemOffset'])
     ) {
       if (this.$width != null) {
         this.__resetItemWidthAndTranslateX(props, state, !makeItems);
-        forceUpdate = true;
       }
     }
 
     if (prevProps == null || Util.isPropsChanged(props, prevProps, ['activeItemOpacity', 'inactiveItemOpacity'])) {
       this.__resetAnimationOpacity(props, state, !makeItems);
-      forceUpdate = true;
     }
 
     if (prevProps == null || Util.isPropsChanged(props, prevProps, ['activeItemScale', 'inactiveItemScale'])) {
       this.__resetAnimationScale(props, state, !makeItems);
-      forceUpdate = true;
-    }
-
-    if (
-      !makeItems &&
-      !forceUpdate &&
-      prevProps != null &&
-      Util.isPropsChanged(props, prevProps, [
-        'itemScaleAlign',
-        'showPaginate',
-        'paginateStyle',
-        'paginateDotStyle',
-        'paginateActiveDotStyle',
-        'onPaginateDotRender',
-      ])
-    ) {
-      forceUpdate = true;
     }
 
     if (prevProps == null || Util.isPropsChanged(props, prevProps, ['autoplay', 'autoplayDelay', 'autoplayInterval'])) {
@@ -268,8 +244,9 @@ class Swiper extends React.Component {
 
     if (makeItems) {
       this.__makeItems(props);
-    } else if (forceUpdate) {
-      this.forceUpdate();
+      return false;
+    } else {
+      return true;
     }
   }
 
