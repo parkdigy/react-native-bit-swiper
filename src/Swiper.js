@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Platform, Dimensions, StyleSheet, View, ViewPropTypes, Animated} from 'react-native';
+import {Platform, Dimensions, StyleSheet, View, ViewPropTypes, Animated, PanResponder} from 'react-native';
 import * as Util from './Util';
 import Animation from './Animation';
 import Item from './Item';
@@ -100,7 +100,7 @@ class Swiper extends React.Component {
   $realItemWidth; // 실제 아이템 넓이 - Props 의 itemWidth 값에서 계산된 실제 넓이
   $scrollContentSize = 0; // ScrollView 의 컨텐츠 크기
   $scrollToBaseTimer; // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer
-  $lastScrollPos; // ScrollView 의 마지막 스크롤 위치
+  $lastScrollPos = 0; // ScrollView 의 마지막 스크롤 위치
   $isLastExactScrollPos = true; // 마지막 스크롤이 정확한 위치인지 여부 (__updateUI 에서 사용)
   $autoplayTimer; // 자동 스크롤 Timer
   $autoplayDelayed = false; // 자동 스크롤 delay 사용 여부
@@ -110,6 +110,20 @@ class Swiper extends React.Component {
   $scrollToIndexWhenEndScrolling = null; // 스크롤 완료 시 이동할 index
   $lastAnimatedScrollToIndex = null; // 마지막 __scrollTo 호출 index (animated=true 인 경우)
   $skipItemIndexChangeEventToIndex = null; // activeItem() 호출 시 애니메이션 중 지나치는 아이템의 index 변경 이벤트 발생시키지 않음
+
+  // Android : 다른 ScrollView 내에 있을 때, onTouchEnd 이벤트 발생하지 않는 문제 처리
+  $panResponder = isIos
+    ? {}
+    : PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderTerminationRequest: () => true,
+        onPanResponderTerminate: () => {
+          this.__handleTouchEnd();
+        },
+      });
 
   //--------------------------------------------------------------------------------------------------------------------
 
@@ -265,7 +279,7 @@ class Swiper extends React.Component {
 
     this.$scrollViewRef = null;
     this.$scrollContentSize = 0;
-    this.$lastScrollPos = null;
+    this.$lastScrollPos = 0;
     this.$lastActiveChangeBaseItemIndex = 0;
     this.$lastActiveChangingBaseItemIndex = 0;
 
@@ -428,23 +442,27 @@ class Swiper extends React.Component {
           scrollToIndexWhenScrollContentSizeChange,
         },
         () => {
-          if (this.$isScrolling) {
-            this.$scrollToIndexWhenEndScrolling = {
-              index: initScrollIndex,
-              animated: false,
-            };
+          if (this.$lastScrollPos === initScrollPos) {
+            this.__updateUI();
           } else {
-            if (isIos) {
-              this.$animation.value.setValue(initScrollPos);
+            if (this.$isScrolling) {
+              this.$scrollToIndexWhenEndScrolling = {
+                index: initScrollIndex,
+                animated: false,
+              };
             } else {
-              if (scrollToIndexWhenScrollContentSizeChange != null) {
-                this.__scrollTo(initScrollIndex, false);
+              if (isIos) {
+                this.$animation.value.setValue(initScrollPos);
+              } else {
+                if (scrollToIndexWhenScrollContentSizeChange != null) {
+                  this.__scrollTo(initScrollIndex, false);
+                }
               }
             }
-          }
 
-          if (showPaginate && this.$paginateRef.current) {
-            this.$paginateRef.current.setActiveIndex(initItemIndex);
+            if (showPaginate && this.$paginateRef.current) {
+              this.$paginateRef.current.setActiveIndex(initItemIndex);
+            }
           }
         },
       );
@@ -461,84 +479,75 @@ class Swiper extends React.Component {
 
     if (items == null) return;
 
-    if (this.$lastScrollPos == null && baseItemIndex * this.$width !== 0) {
-      this.__scrollTo(baseItemIndex, false);
-    } else {
-      if (this.$lastScrollPos == null) {
-        this.$lastScrollPos = 0;
-      }
+    // 페이지 UI - Active Index 업데이트
+    // onItemIndexChanging, onItemIndexChange 이벤트 발생
+    const itemIndex = this.__getItemIndex(this.$lastScrollPos);
+    const isExactItemIndex = Number.isInteger(itemIndex);
 
-      // 페이지 UI - Active Index 업데이트
-      // onItemIndexChanging, onItemIndexChange 이벤트 발생
-      const itemIndex = this.__getItemIndex(this.$lastScrollPos);
-      const isExactItemIndex = Number.isInteger(itemIndex);
+    if (isExactItemIndex) {
+      this.__endScrolling();
 
-      if (isExactItemIndex) {
-        this.__endScrolling();
-
-        if (Util.isIndexIn(itemIndex, items.length)) {
-          if (this.$skipItemIndexChangeEventToIndex != null && this.$skipItemIndexChangeEventToIndex === itemIndex) {
-            this.$skipItemIndexChangeEventToIndex = null;
-          }
-          const baseItemIndex = items[itemIndex].baseIndex;
-
-          if (baseItemIndex !== this.$lastActiveChangeBaseItemIndex) {
-            if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChange) onItemIndexChange(baseItemIndex);
-            this.$lastActiveChangeBaseItemIndex = baseItemIndex;
-          } else {
-            if (!this.$isLastExactScrollPos || this.$lastActiveChangingBaseItemIndex !== baseItemIndex) {
-              if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChanging)
-                onItemIndexChanging(baseItemIndex);
-              this.$lastActiveChangingBaseItemIndex = baseItemIndex;
-            }
-          }
-
-          if (showPaginate && this.$paginateRef.current) {
-            this.$paginateRef.current.setActiveIndex(baseItemIndex);
-          }
+      if (Util.isIndexIn(itemIndex, items.length)) {
+        if (this.$skipItemIndexChangeEventToIndex != null && this.$skipItemIndexChangeEventToIndex === itemIndex) {
+          this.$skipItemIndexChangeEventToIndex = null;
         }
+        const baseItemIndex = items[itemIndex].baseIndex;
 
-        this.$isLastExactScrollPos = true;
-      } else {
-        if (!this.$isScrolling) {
-          this.__beginScrolling();
-        }
-
-        const nearItemIndex = Math.round(itemIndex);
-
-        if (Util.isIndexIn(nearItemIndex, items.length)) {
-          const baseItemIndex = items[nearItemIndex].baseIndex;
-          if (baseItemIndex !== this.$lastActiveChangingBaseItemIndex) {
-            if (showPaginate && this.$paginateRef.current) {
-              this.$paginateRef.current.setActiveIndex(baseItemIndex);
-            }
-
-            if (
-              this.$skipItemIndexChangeEventToIndex != null &&
-              this.$skipItemIndexChangeEventToIndex === nearItemIndex
-            ) {
-              this.$skipItemIndexChangeEventToIndex = null;
-            }
-
+        if (baseItemIndex !== this.$lastActiveChangeBaseItemIndex) {
+          if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChange) onItemIndexChange(baseItemIndex);
+          this.$lastActiveChangeBaseItemIndex = baseItemIndex;
+        } else {
+          if (!this.$isLastExactScrollPos || this.$lastActiveChangingBaseItemIndex !== baseItemIndex) {
             if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChanging)
               onItemIndexChanging(baseItemIndex);
-
             this.$lastActiveChangingBaseItemIndex = baseItemIndex;
           }
         }
 
-        this.$isLastExactScrollPos = false;
+        if (showPaginate && this.$paginateRef.current) {
+          this.$paginateRef.current.setActiveIndex(baseItemIndex);
+        }
       }
 
-      // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer 시작
-      if (isExactItemIndex) {
-        this.__startScrollToBaseTimer();
+      this.$isLastExactScrollPos = true;
+    } else {
+      if (!this.$isScrolling) {
+        this.__beginScrolling();
       }
 
-      // 자동 스크롤 Timer 시작
-      if (isExactItemIndex && autoplay) {
-        this.__startAutoplayTimer();
+      const nearItemIndex = Math.round(itemIndex);
+
+      if (Util.isIndexIn(nearItemIndex, items.length)) {
+        const baseItemIndex = items[nearItemIndex].baseIndex;
+        if (baseItemIndex !== this.$lastActiveChangingBaseItemIndex) {
+          if (showPaginate && this.$paginateRef.current) {
+            this.$paginateRef.current.setActiveIndex(baseItemIndex);
+          }
+
+          if (
+            this.$skipItemIndexChangeEventToIndex != null &&
+            this.$skipItemIndexChangeEventToIndex === nearItemIndex
+          ) {
+            this.$skipItemIndexChangeEventToIndex = null;
+          }
+
+          if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChanging) onItemIndexChanging(baseItemIndex);
+
+          this.$lastActiveChangingBaseItemIndex = baseItemIndex;
+        }
       }
+
+      this.$isLastExactScrollPos = false;
+    }
+
+    // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer 시작
+    if (isExactItemIndex) {
+      this.__startScrollToBaseTimer();
+    }
+
+    // 자동 스크롤 Timer 시작
+    if (isExactItemIndex && autoplay) {
+      this.__startAutoplayTimer();
     }
   }
 
@@ -943,7 +952,8 @@ class Swiper extends React.Component {
               onTouchStart={this.__handleTouchStart}
               onTouchEnd={this.__handleTouchEnd}
               onScrollEndDrag={this.__handleScrollEndDrag}
-              onContentSizeChange={this.__handleContentSizeChange}>
+              onContentSizeChange={this.__handleContentSizeChange}
+              {...this.$panResponder.panHandlers}>
               {items.map((item, index) => {
                 return (
                   <SwiperItem
