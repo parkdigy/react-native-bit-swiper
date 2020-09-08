@@ -100,6 +100,7 @@ class Swiper extends React.Component {
   $scrollContentSize; // ScrollView 의 컨텐츠 크기
   $scrollToBaseTimer; // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer
   $lastScrollPos; // ScrollView 의 마지막 스크롤 위치
+  $isLastExactScrollPos = true; // 마지막 스크롤이 정확한 위치인지 여부 (__updateUI 에서 사용)
   $autoplayTimer; // 자동 스크롤 Timer
   $autoplayDelayed = false; // 자동 스크롤 delay 사용 여부
   $lastActiveChangeBaseItemIndex = 0; // 활성화 된 원본 아이템 Index
@@ -108,6 +109,7 @@ class Swiper extends React.Component {
   $scrollToIndexWhenEndScrolling = null; // 스크롤 완료 시 이동할 index
   $scrollToIndexWhenScrollContentSizeChange = null; // 컨텐츠 사이즈 변경 시 이동할 index (안드로이드에서만 사용)
   $lastAnimatedScrollToIndex = null; // 마지막 __scrollTo 호출 index (animated=true 인 경우)
+  $skipItemIndexChangeEventToIndex = null; // activeItem() 호출 시 애니메이션 중 지나치는 아이템의 index 변경 이벤트 발생시키지 않음
 
   //--------------------------------------------------------------------------------------------------------------------
 
@@ -133,6 +135,9 @@ class Swiper extends React.Component {
   activeItem(index, animated = true) {
     const {baseItemCount, baseItemIndex} = this.state;
     if (Util.isIndexIn(index, baseItemCount)) {
+      if (animated) {
+        this.$skipItemIndexChangeEventToIndex = baseItemIndex + index;
+      }
       this.__scrollTo(baseItemIndex + index, animated);
     }
   }
@@ -146,6 +151,7 @@ class Swiper extends React.Component {
     }
     const {items} = this.state;
     if (items && Util.isIndexIn(itemIndex, items.length)) {
+      this.$skipItemIndexChangeEventToIndex = null;
       this.__scrollTo(itemIndex, animated);
     }
   }
@@ -159,6 +165,7 @@ class Swiper extends React.Component {
     }
     const {items} = this.state;
     if (items && Util.isIndexIn(itemIndex, items.length)) {
+      this.$skipItemIndexChangeEventToIndex = null;
       this.__scrollTo(itemIndex, animated);
     }
   }
@@ -464,20 +471,33 @@ class Swiper extends React.Component {
         this.__endScrolling();
 
         if (Util.isIndexIn(itemIndex, items.length)) {
+          if (this.$skipItemIndexChangeEventToIndex != null && this.$skipItemIndexChangeEventToIndex === itemIndex) {
+            this.$skipItemIndexChangeEventToIndex = null;
+          }
           const baseItemIndex = items[itemIndex].baseIndex;
+
           if (baseItemIndex !== this.$lastActiveChangeBaseItemIndex) {
-            if (onItemIndexChange) onItemIndexChange(baseItemIndex);
+            if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChange) onItemIndexChange(baseItemIndex);
             this.$lastActiveChangeBaseItemIndex = baseItemIndex;
+          } else {
+            if (!this.$isLastExactScrollPos || this.$lastActiveChangingBaseItemIndex !== baseItemIndex) {
+              if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChanging)
+                onItemIndexChanging(baseItemIndex);
+              this.$lastActiveChangingBaseItemIndex = baseItemIndex;
+            }
           }
-          if (baseItemIndex !== this.$lastActiveChangingBaseItemIndex) {
-            if (onItemIndexChanging) onItemIndexChanging(baseItemIndex);
-            this.$lastActiveChangingBaseItemIndex = baseItemIndex;
-          }
+
           if (showPaginate && this.$paginateRef.current) {
             this.$paginateRef.current.setActiveIndex(baseItemIndex);
           }
         }
+
+        this.$isLastExactScrollPos = true;
       } else {
+        if (!this.$isScrolling) {
+          this.__beginScrolling();
+        }
+
         const nearItemIndex = Math.round(itemIndex);
 
         if (Util.isIndexIn(nearItemIndex, items.length)) {
@@ -486,11 +506,22 @@ class Swiper extends React.Component {
             if (showPaginate && this.$paginateRef.current) {
               this.$paginateRef.current.setActiveIndex(baseItemIndex);
             }
-            if (onItemIndexChanging) onItemIndexChanging(baseItemIndex);
+
+            if (
+              this.$skipItemIndexChangeEventToIndex != null &&
+              this.$skipItemIndexChangeEventToIndex === nearItemIndex
+            ) {
+              this.$skipItemIndexChangeEventToIndex = null;
+            }
+
+            if (this.$skipItemIndexChangeEventToIndex == null && onItemIndexChanging)
+              onItemIndexChanging(baseItemIndex);
 
             this.$lastActiveChangingBaseItemIndex = baseItemIndex;
           }
         }
+
+        this.$isLastExactScrollPos = false;
       }
 
       // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer 시작
@@ -825,28 +856,29 @@ class Swiper extends React.Component {
     if (onLayout) onLayout(e);
   };
 
-  __handleScrollViewLayout = (e) => {
-    this.__updateUI();
-  };
-
   _handleScroll = (e) => {
     const x = e.nativeEvent.contentOffset.x;
 
     if (this.$lastScrollPos !== x) {
       this.$lastScrollPos = x;
-
       this.__updateUI();
     }
   };
 
   __handleTouchStart = () => {
+    this.$skipItemIndexChangeEventToIndex = null;
+
     this.__beginScrolling();
   };
 
-  __handleTouchDragEnd = () => {
+  __handleTouchEnd = () => {
     if (Number.isInteger(this.__getItemIndex(this.$lastScrollPos))) {
       this.__updateUI();
     }
+  };
+
+  __handleScrollEndDrag = () => {
+    this.__handleTouchEnd();
   };
 
   __handleContentSizeChange = (contentSize) => {
@@ -892,14 +924,13 @@ class Swiper extends React.Component {
               decelerationRate="fast"
               pagingEnabled
               contentOffset={contentOffset}
-              onLayout={this.__handleScrollViewLayout}
               onScroll={Animated.event([{nativeEvent: {contentOffset: {x: this.$animation.value}}}], {
                 useNativeDriver: true,
                 listener: this._handleScroll,
               })}
               onTouchStart={this.__handleTouchStart}
-              onTouchEnd={this.__handleTouchDragEnd}
-              onScrollEndDrag={this.__handleTouchDragEnd}
+              onTouchEnd={this.__handleTouchEnd}
+              onScrollEndDrag={this.__handleScrollEndDrag}
               onContentSizeChange={this.__handleContentSizeChange}>
               {items.map((item, index) => {
                 return (

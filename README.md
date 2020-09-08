@@ -12,6 +12,8 @@
 - 다양한 기능을 실시간으로 테스트할 수 있는 [`예제 프로그램`](docs/Examples.md#예제-프로그램)을 제공합니다.
 
 ## 📝 업데이트
+- [`v1.1.3`](docs/Update.md#v113) : 불필요한 Index 변경 이벤트 발생 제거
+- [`v1.1.2`](docs/Update.md#v112) : Props 변경 시 특정 상황에 [`onItemRender`](ApiReference.md#onitemrender) 이벤트가 호출되지 않는 버그 수정
 - [`v1.1.0`](docs/Update.md#v110) : 애니메이션 성능 및 안정성 향상
 - [`v1.0.2`](docs/Update.md#v102) : 비활성 아이템 표시 넓이가 다르게 표시되는 현상 수정
 - [`v1.0.1`](docs/Update.md#v101) : 최초 배포

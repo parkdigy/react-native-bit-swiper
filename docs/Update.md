@@ -3,11 +3,26 @@
 이 문서는 React Native Bit Swiper 의 업데이트 정보를 제공합니다.
 
 ## 목차
+- [`v1.1.3`](#v113) : 불필요한 Index 변경 이벤트 발생 제거
+- [`v1.1.2`](#v112) : Props 변경 시 특정 상황에 [`onItemRender`](ApiReference.md#onitemrender) 이벤트가 호출되지 않는 버그 수정
 - [`v1.1.0`](#v110) : 애니메이션 성능 및 안정성 향상
 - [`v1.0.2`](#v102) : 비활성 아이템 표시 넓이가 다르게 표시되는 현상 수정
 - [`v1.0.1`](#v101) : 최초 배포
 
 ## 버전
+
+### `v1.1.3`[⬆](#목차)
+불필요한 Index 변경 이벤트 발생 제거
+
+[`onItemIndexChange`](ApiReference.md#onitemindexchange)
+[`onItemIndexChanging`](ApiReference.md#onitemindexchanging) 이벤트가 불필요하게 많이 발생되는 부분을 제거하였습니다.
+
+### `v1.1.2`[⬆](#목차)
+Props 변경 시 특정 상황에
+[`onItemRender`](ApiReference.md#onitemrender) 이벤트가 호출되지 않는 버그 수정
+
+Swiper 컴포넌트의 Props 변경 시 항상 [`onItemRender`](ApiReference.md#onitemrender) 이벤트가 호출되게 수정되었습니다.
+ 
 ### `v1.1.0`[⬆](#목차)
 애니메이션 성능 및 안정성 향상
 
