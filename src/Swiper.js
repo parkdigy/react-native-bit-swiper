@@ -110,6 +110,7 @@ class Swiper extends React.Component {
   $scrollToIndexWhenEndScrolling = null; // 스크롤 완료 시 이동할 index
   $lastAnimatedScrollToIndex = null; // 마지막 __scrollTo 호출 index (animated=true 인 경우)
   $skipItemIndexChangeEventToIndex = null; // activeItem() 호출 시 애니메이션 중 지나치는 아이템의 index 변경 이벤트 발생시키지 않음
+  $touchEndTimer; // __handleTouchEnd 호출 Timer
 
   // Android : 다른 ScrollView 내에 있을 때, onTouchEnd 이벤트 발생하지 않는 문제 처리
   $panResponder = isIos
@@ -121,7 +122,7 @@ class Swiper extends React.Component {
         onMoveShouldSetPanResponderCapture: () => true,
         onPanResponderTerminationRequest: () => true,
         onPanResponderTerminate: () => {
-          this.__handleTouchEnd();
+          this.__startTouchEndTimer();
         },
       });
 
@@ -132,6 +133,7 @@ class Swiper extends React.Component {
   }
 
   componentWillUnmount() {
+    this.__stopTouchEndTimer();
     this.__stopAutoplayTimer();
     this.__stopScrollToBaseTimer();
   }
@@ -650,6 +652,24 @@ class Swiper extends React.Component {
     }
   }
 
+  // TouchEnd Timer ----------------------------------------------------------------------------------------------------
+
+  __startTouchEndTimer() {
+    this.__stopTouchEndTimer();
+
+    this.$touchEndTimer = setTimeout(() => {
+      this.$touchEndTimer = null;
+      this.__handleTouchEnd();
+    }, 1000);
+  }
+
+  __stopTouchEndTimer() {
+    if (this.$touchEndTimer) {
+      clearTimeout(this.$touchEndTimer);
+      this.$touchEndTimer = null;
+    }
+  }
+
   // Scrolling ---------------------------------------------------------------------------------------------------------
 
   __beginScrolling() {
@@ -874,6 +894,8 @@ class Swiper extends React.Component {
 
   _handleScroll = (e) => {
     const x = e.nativeEvent.contentOffset.x;
+
+    this.__stopTouchEndTimer();
 
     if (this.$lastScrollPos !== x) {
       this.$lastScrollPos = x;
