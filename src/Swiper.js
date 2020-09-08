@@ -86,6 +86,7 @@ class Swiper extends React.Component {
     contentOffset: {}, // ScrollView 에서 이동할 스크롤 위치 - iOS 에서 사용
     animationInputRangeType: null,
     realLoopCloneCount: 0, // 실제 LoopCloneCount
+    scrollToIndexWhenScrollContentSizeChange: null, // 컨텐츠 사이즈 변경 시 이동할 index (안드로이드에서만 사용)
   };
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -97,7 +98,7 @@ class Swiper extends React.Component {
 
   $width; // 컨테이너의 넓이
   $realItemWidth; // 실제 아이템 넓이 - Props 의 itemWidth 값에서 계산된 실제 넓이
-  $scrollContentSize; // ScrollView 의 컨텐츠 크기
+  $scrollContentSize = 0; // ScrollView 의 컨텐츠 크기
   $scrollToBaseTimer; // Loop 일 때, 복사 아이템으로 이동하면, 원본 아이템으로 이동하는 Timer
   $lastScrollPos; // ScrollView 의 마지막 스크롤 위치
   $isLastExactScrollPos = true; // 마지막 스크롤이 정확한 위치인지 여부 (__updateUI 에서 사용)
@@ -107,7 +108,6 @@ class Swiper extends React.Component {
   $lastActiveChangingBaseItemIndex = 0; // 스크롤 중 활성화 된 원본 아이템 Index
   $isScrolling = false; // 스크롤 중인지 여부
   $scrollToIndexWhenEndScrolling = null; // 스크롤 완료 시 이동할 index
-  $scrollToIndexWhenScrollContentSizeChange = null; // 컨텐츠 사이즈 변경 시 이동할 index (안드로이드에서만 사용)
   $lastAnimatedScrollToIndex = null; // 마지막 __scrollTo 호출 index (animated=true 인 경우)
   $skipItemIndexChangeEventToIndex = null; // activeItem() 호출 시 애니메이션 중 지나치는 아이템의 index 변경 이벤트 발생시키지 않음
 
@@ -403,6 +403,19 @@ class Swiper extends React.Component {
       const initScrollIndex = baseItemIndex + initItemIndex;
       const initScrollPos = initScrollIndex * this.$width;
       const contentOffset = this.__makeContentOffset(initScrollPos);
+      let scrollToIndexWhenScrollContentSizeChange = null;
+
+      if (!isIos) {
+        if (stateItems && stateItems.length !== items.length) {
+          scrollToIndexWhenScrollContentSizeChange = initScrollIndex;
+        } else {
+          if (this.$lastScrollPos !== initScrollPos) {
+            if (initScrollPos > this.$scrollContentSize) {
+              scrollToIndexWhenScrollContentSizeChange = initScrollIndex;
+            }
+          }
+        }
+      }
 
       this.setState(
         {
@@ -412,6 +425,7 @@ class Swiper extends React.Component {
           contentOffset,
           animationInputRangeType,
           realLoopCloneCount,
+          scrollToIndexWhenScrollContentSizeChange,
         },
         () => {
           if (this.$isScrolling) {
@@ -423,16 +437,8 @@ class Swiper extends React.Component {
             if (isIos) {
               this.$animation.value.setValue(initScrollPos);
             } else {
-              if (stateItems && stateItems.length !== items.length) {
-                this.$scrollToIndexWhenScrollContentSizeChange = initScrollIndex;
-              } else {
-                if (this.$lastScrollPos !== initScrollPos) {
-                  if (initScrollPos > this.$scrollContentSize) {
-                    this.$scrollToIndexWhenScrollContentSizeChange = initScrollIndex;
-                  } else {
-                    this.__scrollTo(initScrollIndex, false);
-                  }
-                }
+              if (scrollToIndexWhenScrollContentSizeChange != null) {
+                this.__scrollTo(initScrollIndex, false);
               }
             }
           }
@@ -615,6 +621,7 @@ class Swiper extends React.Component {
         this.$autoplayDelayed = true;
 
         const itemIndex = this.__getItemIndex(this.$lastScrollPos);
+
         if (Number.isInteger(itemIndex)) {
           const {items} = this.state;
           if (items) {
@@ -883,9 +890,14 @@ class Swiper extends React.Component {
 
   __handleContentSizeChange = (contentSize) => {
     this.$scrollContentSize = contentSize;
-    if (this.$scrollToIndexWhenScrollContentSizeChange != null) {
-      if (this.$scrollToIndexWhenScrollContentSizeChange * this.$width <= this.$scrollContentSize) {
-        this.__scrollTo(this.$scrollToIndexWhenScrollContentSizeChange, false);
+
+    const {scrollToIndexWhenScrollContentSizeChange} = this.state;
+    if (scrollToIndexWhenScrollContentSizeChange != null) {
+      if (scrollToIndexWhenScrollContentSizeChange * this.$width <= this.$scrollContentSize) {
+        this.__scrollTo(scrollToIndexWhenScrollContentSizeChange, false);
+        this.setState({
+          scrollToIndexWhenScrollContentSizeChange: null,
+        });
       }
     }
   };
@@ -907,7 +919,7 @@ class Swiper extends React.Component {
       paginateActiveDotStyle,
       onPaginateDotRender,
     } = this.props;
-    const {items, baseItemCount, contentOffset} = this.state;
+    const {items, baseItemCount, contentOffset, scrollToIndexWhenScrollContentSizeChange} = this.state;
 
     const renderItems = propsItems.map((item, index) => onItemRender && onItemRender(item, index));
 
@@ -917,7 +929,7 @@ class Swiper extends React.Component {
           <>
             <Animated.ScrollView
               ref={(ref) => (this.$scrollViewRef = ref)}
-              style={[styles.scrollView]}
+              style={[styles.scrollView, {opacity: scrollToIndexWhenScrollContentSizeChange == null ? 1 : 0}]}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
               scrollEventThrottle={8}
