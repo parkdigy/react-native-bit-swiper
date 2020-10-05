@@ -1,7 +1,7 @@
 {
   "name": "react-native-bit-swiper",
   "title": "React Native Bit Swiper",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Swiper/Carousel component for React Native",
   "main": "src/index.js",
   "repository": {

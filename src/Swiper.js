@@ -714,7 +714,7 @@ class Swiper extends React.Component {
   }
 
   __resetItemWidthAndTranslateX(props, state, updateItems = true) {
-    if (this.$width) {
+    if (this.$width != null) {
       const {itemWidth, inactiveItemScale, inactiveItemOffset} = props;
 
       this.$realItemWidth = itemWidth || this.$width;

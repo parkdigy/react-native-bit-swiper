@@ -12,6 +12,7 @@
 - 다양한 기능을 실시간으로 테스트할 수 있는 [`예제 프로그램`](docs/Examples.md#예제-프로그램)을 제공합니다.
 
 ## 📝 업데이트
+- [`v1.1.8`](docs/Update.md#v118) : 특정 상황에 Warning 발생하는 현상 수정
 - [`v1.1.7`](docs/Update.md#v117) : Android 에서 다른 ScrollView 내에 있을 때, 자동 스크롤(Autoplay) 중지되는 현상 수정
 - [`v1.1.4`](docs/Update.md#v114) : Android 에서 루프(Loop) 사용 시 시작 아이템이 활성화 되지 않는 문제 수정 
 - [`v1.1.3`](docs/Update.md#v113) : 불필요한 Index 변경 이벤트 발생 제거
